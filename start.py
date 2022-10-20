@@ -1,5 +1,6 @@
 from flask import Flask
 from flask import request
+from flask import jsonify
 # from flask import session
 from flask import render_template
 
@@ -20,6 +21,17 @@ class Logins(db.Model):
     def __init__(self, username, password):
         self.username = username
         self.password = password
+
+class Cars(db.Model):
+    id = db.Column('id', db.Integer, primary_key = True)
+    name = db.Column(db.String(100))
+    color = db.Column(db.String(32))
+    price = db.Column(db.Float())
+    
+    def __init__(self, name, color, price):
+        self.name = name
+        self.color = color
+        self.price = price
 
 @app.route("/")
 def index():
@@ -50,6 +62,16 @@ def loginPageLogIn():
 def searchPage():
     return render_template("search.html")
 
+
+@app.route("/search.html", methods=["POST"])
+def searchPageSearch():
+    name = request.get_json().get("name")
+    
+    if(name == ""):
+        cars = Cars.query.all()
+    else:
+        cars = Cars.query.filter(Cars.name.contains(name)).all()
+    return jsonify({'response': render_template('carTable.html', cars=cars)})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5050)
