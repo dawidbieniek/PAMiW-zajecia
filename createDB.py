@@ -7,9 +7,9 @@ def testTable(tableName):
         print("\t", r)
 
 if __name__ == "__main__":
-    db = sqlite3.connect("database.db")
+    db = sqlite3.connect("db/database.db")
 
-    with open("schema.sql") as f:
+    with open("db/schema.sql") as f:
         db.executescript(f.read())
 
     print("Created tables:")

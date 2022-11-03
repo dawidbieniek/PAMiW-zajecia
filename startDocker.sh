@@ -1,2 +1,2 @@
 #!/bin/sh
-docker start -a pamw
+docker start -a pamw-container

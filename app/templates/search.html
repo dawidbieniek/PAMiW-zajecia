@@ -12,7 +12,7 @@
 
             function updateTable(text) {
                 json = JSON.stringify({ "name": text })
-                fetch("/search.html", {
+                fetch("/search", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: json
