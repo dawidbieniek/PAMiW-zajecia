@@ -5,36 +5,13 @@ from flask import g
 
 import sqlite3
 
-
 DATABASE = '../db/database.db'
 
 app = Flask(__name__)
-app.app_context().push()
-
-# class Logins(db.Model):
-#     id = db.Column('login_id', db.Integer, primary_key = True)
-#     username = db.Column(db.String(32))
-#     password = db.Column(db.String(32))
-    
-#     def __init__(self, username, password):
-#         self.username = username
-#         self.password = password
-
-# class Cars(db.Model):
-#     id = db.Column('id', db.Integer, primary_key = True)
-#     name = db.Column(db.String(100))
-#     color = db.Column(db.String(32))
-#     price = db.Column(db.Float())
-    
-#     def __init__(self, name, color, price):
-#         self.name = name
-#         self.color = color
-#         self.price = price
 
 @app.route("/")
 def index():
     return render_template("index.html")
-
 
 @app.route("/login.html")
 def loginPage():
@@ -46,12 +23,12 @@ def loginPageLogIn():
     psswd = request.get_json().get("password")
     
     if(usrname == "" or psswd == ""):
-        return "Empty"
+        return "Podaj login i hasło"
 
-    # logins = Logins.query.all()
-    # for l in range(len(logins)):
-    #     if logins[l].username == usrname and logins[l].password == psswd:
-    #         return "Ok"
+    logins = Logins.query.all()
+    for l in range(len(logins)):
+        if logins[l].username == usrname and logins[l].password == psswd:
+            return "Ok"
     
     return "Invalid"
 

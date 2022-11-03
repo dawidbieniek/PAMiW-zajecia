@@ -20,12 +20,7 @@
                 }).then((response) => response.text())
                     .then((text) => {
                         document.getElementById("loginMsg").style.display = "Block"
-                        if (text == "Invalid")
-                            document.getElementById("loginMsg").innerHTML = "Błędne dane!"
-                        else if (text == "Empty")
-                            document.getElementById("loginMsg").innerHTML = "Wprowadź dane!"
-                        else
-                            document.getElementById("loginMsg").innerHTML = "Zalogowano!"
+                        document.getElementById("loginMsg").innerText = text
                     });
             });
         });
