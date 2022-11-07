@@ -13,7 +13,7 @@
                 data = new FormData(form);
                 json = JSON.stringify(Object.fromEntries(data));
 
-                fetch("/login/authenticate", {
+                fetch("{{url_for('loginPage')}}", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: json
@@ -30,16 +30,19 @@
 
 <body>
     <p>
-        <a href="/..">Powrót</a>
+        <a href="{{url_for('indexPage')}}">Powrót</a>
     </p>
     <h1>Logowanie</h1>
     <form id="loginForm" action="" method="post" enctype="multipart/form-data">
         <label>Login</label>
-        <input name="username" maxlength="32" type="text" />
+        <input name="username" maxlength="32" type="text" required />
         <label>Hasło</label>
-        <input name="password" maxlength="32" type="password" />
+        <input name="password" maxlength="32" type="password" required/>
         <input name="login" value="Zaloguj" type="submit" />
     </form>
+    <p>
+        <a href="{{url_for('registerPage')}}">Rejestracja</a>
+    </p>
     <p id="loginMsg" style="display:none;"></p>
 </body>
 

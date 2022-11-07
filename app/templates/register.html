@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Rejestracja</title>
+
+    <script>
+        window.addEventListener("load", function () {
+            form = document.getElementById("registerForm");
+            form.addEventListener("submit", function (event) {
+                event.preventDefault();
+                data = new FormData(form);
+                json = JSON.stringify(Object.fromEntries(data));
+
+                fetch("{{url_for('registerPage')}}", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: json
+                }).then((response) => response.text())
+                    .then((text) => {
+                        document.getElementById("msg").style.display = "Block"
+                        document.getElementById("msg").innerText = text
+                    });
+            });
+        });
+    </script>
+
+</head>
+
+<body>
+    <p>
+        <a href="{{url_for('loginPage')}}">Powrót</a>
+    </p>
+    <h1>Rejestracja</h1>
+    <form id="registerFrom" action="" method="post" enctype="multipart/form-data">
+        <label>Login</label>
+        <input name="username" maxlength="32" type="text" />
+        <label>Hasło</label>
+        <input name="password" maxlength="32" type="password" />
+        <label>Powtórz hasło</label>
+        <input name="repPassword" maxlength="32" type="password" />
+        <input name="register" value="Zarejestruj" type="submit" />
+    </form>
+    <p id="msg" style="display:none;"></p>
+</body>
+
+</html>
