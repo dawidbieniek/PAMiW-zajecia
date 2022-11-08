@@ -13,7 +13,7 @@
             json = JSON.stringify(Object.fromEntries(data));
 
             fetch("{{url_for('registerPage')}}", {
-                method: "POST",
+                method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: json
             })

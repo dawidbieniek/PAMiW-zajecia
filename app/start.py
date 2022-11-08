@@ -1,6 +1,4 @@
-from flask import Flask
-from flask import request
-from flask import render_template
+from flask import Flask, request, render_template, url_for, redirect
 
 from contextlib import closing
 
@@ -37,10 +35,10 @@ def loginPage():
     return render_template("login.html")
     
 
-@app.route("/login/register", methods = ["GET", "POST"])
+@app.route("/login/register", methods = ["GET", "PUT"])
 def registerPage():
-    # POST
-    if request.method == "POST":
+    # PUT
+    if request.method == "PUT":
         usrname = request.get_json().get("username")
         psswd = request.get_json().get("password")
         reppsswd = request.get_json().get("repPassword")
@@ -57,6 +55,7 @@ def registerPage():
         # Register user
         hashed = hashpw(psswd.encode("utf-8"), gensalt())
         query(f"INSERT INTO users (usrname, passwd) VALUES ('{usrname}', '{hashed.decode('utf-8')}')")
+        # return redirect(url_for(loginPage), 201)
         return "", 204
 
     # GET
@@ -67,14 +66,12 @@ def registerPage():
 def carSearchPage():
     # POST
     if request.method == "POST":
-        name = request.text()
-        
-        # if(name == ""):
-        #     cars = Cars.query.all()
-        # else:
-        #     cars = Cars.query.filter(Cars.name.contains(name)).all()
-        # return jsonify({'response': render_template('carTable.html', cars=cars)})
-        return make_response("Nie dostępne", 503)
+        text = request.get_json().get("query")
+        if(not text or text == ""):
+            cars = query(f"SELECT * FROM cars")
+        else:
+            cars = query(f"SELECT * FROM cars WHERE carName LIKE '%{text}%'")
+        return render_template('tables/carTable.html', cars=cars), 200
     
     # GET
     return render_template("carSearch.html")

@@ -6,43 +6,29 @@
     <title>Wypożyczalnia samochodów - wyszukiwanie</title>
 
     <script>
-        window.addEventListener("load", function () {
-            input = document.getElementById('nameInput');
-            updateTable("")
-
-            function updateTable(text) {
-                // json = JSON.stringify({ "name": text })
-                fetch("{{url_for('searchPage')}}", {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain" },
-                    body: text
-                }).then((response) => {
-                        document.getElementById("carTable").innerHTML = response.text;
+        function updateTable(text) {
+            console.info(text);
+            json = JSON.stringify({ "query" : text })
+            fetch("{{url_for('carSearchPage')}}", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: json
+            }).then((response) => response.text())
+                .then((text) => {
+                    document.getElementById("carTable").innerHTML = text
                 });
-
-                    // .then((response) => response.text())
-                    // .then((text) => {
-                    //     v = JSON.parse(text)
-                    //     document.getElementById("carTable").innerHTML = v.response
-                    // });
-            }
-
-            input.addEventListener("input", function (event) {
-                updateTable(input.value)
-            });
-        });
+        }
     </script>
 
 </head>
 
-<body>
+<body onload="updateTable('')">
     <p>
         <a href="{{url_for('indexPage')}}">Powrót</a>
     </p>
-    <p id="abc"></p>
     <h1>Wyszukiwanie samochodów</h1>
     <br>
-    <input id="nameInput" placeholder="Nazwa samochodu" type="text" />
+    <input oninput="updateTable(this.value)" placeholder="Nazwa samochodu" type="text" />
 
     <div id="carTable"></div>
 
