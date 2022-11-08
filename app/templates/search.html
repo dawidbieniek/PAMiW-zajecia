@@ -11,16 +11,20 @@
             updateTable("")
 
             function updateTable(text) {
-                json = JSON.stringify({ "name": text })
+                // json = JSON.stringify({ "name": text })
                 fetch("{{url_for('searchPage')}}", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: json
-                }).then((response) => response.text())
-                    .then((text) => {
-                        v = JSON.parse(text)
-                        document.getElementById("carTable").innerHTML = v.response
-                    });
+                    headers: { "Content-Type": "text/plain" },
+                    body: text
+                }).then((response) => {
+                        document.getElementById("carTable").innerHTML = response.text;
+                });
+
+                    // .then((response) => response.text())
+                    // .then((text) => {
+                    //     v = JSON.parse(text)
+                    //     document.getElementById("carTable").innerHTML = v.response
+                    // });
             }
 
             input.addEventListener("input", function (event) {

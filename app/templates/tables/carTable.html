@@ -9,9 +9,9 @@
     <tbody>
         {% for row in cars %}
         <tr>
-            <td>{{row.name}}</td>
-            <td>{{row.color}}</td>
-            <td>{{row.price}}</td>
+            <td>{{row[0]}}</td>
+            <td>{{row[1]}}</td>
+            <td>{{row[2]}}</td>
         </tr>
         {% endfor %}
     </tbody>

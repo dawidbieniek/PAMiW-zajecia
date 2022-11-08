@@ -3,8 +3,7 @@ DROP TABLE IF EXISTS cars;
 
 CREATE TABLE users
 (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    usrname TEXT(32),
+    usrname TEXT(32) PRIMARY KEY,
     passwd TEXT(128)
 );
 

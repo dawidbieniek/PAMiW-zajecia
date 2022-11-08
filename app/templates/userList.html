@@ -12,22 +12,26 @@
     </p>
     <h1>Lista użytkowników</h1>
     <br>
+    {% if users|length %}
     <table>
         <thead>
             <tr>
-                <th>Login</th>
+                <th>Login*</th>
                 <th>Hasło</th>
             </tr>
         </thead>
         <tbody>
             {% for row in users %}
             <tr>
-                <td>{{row.name}}</td>
-                <td>{{row.password}}</td>
+                <td>{{ row[0] }}</td>
+                <td>{{ row[1] }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    {% else %}
+    <p>Nie znaleziono żadnych użytkowników</p>
+    {% endif %}
 </body>
 
 </html>
