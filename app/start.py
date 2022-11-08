@@ -63,8 +63,8 @@ def registerPage():
     return render_template("register.html")
     
 
-@app.route("/search", methods = ["GET", "POST"])
-def searchPage():
+@app.route("/carSearch", methods = ["GET", "POST"])
+def carSearchPage():
     # POST
     if request.method == "POST":
         name = request.text()
@@ -77,7 +77,7 @@ def searchPage():
         return make_response("Nie dostępne", 503)
     
     # GET
-    return render_template("search.html")
+    return render_template("carSearch.html")
 
 @app.route("/userList", methods = ["GET"])
 def userListPage():
