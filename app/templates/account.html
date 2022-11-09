@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Konto {{user.username}}</title>
+
+</head>
+
+<body>
+    <p>
+        <a href="{{url_for('indexPage')}}">Powrót</a>
+    </p>
+    <h1>Konto</h1>
+    <p>Login: {{user.username}}</p>
+    <p>Typ konta: {{'admin' if user.isadmin else 'zwykłe'}}</p>
+    <br>
+    <a href="{{url_for('changePasswordPage')}}">Zmień hasło</a>
+</body>
+
+</html>

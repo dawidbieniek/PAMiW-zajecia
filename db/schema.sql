@@ -3,8 +3,9 @@ DROP TABLE IF EXISTS cars;
 
 CREATE TABLE users
 (
-    usrname TEXT(32) PRIMARY KEY,
-    passwd TEXT(128)
+    username TEXT(32) PRIMARY KEY,
+    password TEXT(128) NOT NULL,
+    isadmin INTEGER
 );
 
 CREATE TABLE cars

@@ -14,17 +14,12 @@
     <br>
     {% if users|length %}
     <table>
-        <thead>
-            <tr>
-                <th>Login*</th>
-                <th>Hasło</th>
-            </tr>
-        </thead>
         <tbody>
             {% for row in users %}
             <tr>
-                <td>{{ row[0] }}</td>
-                <td>{{ row[1] }}</td>
+                {% for data in row %}
+                <td>{{ data }}</td>
+                {% endfor %}
             </tr>
             {% endfor %}
         </tbody>
