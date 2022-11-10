@@ -1,27 +1,24 @@
-<!DOCTYPE html>
-<html>
+{%extends "baseBare.html"%}
+{%block title%}Wyszukiwanie samochodów{%endblock%}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Wypożyczalnia samochodów - wyszukiwanie</title>
+{%block head%}
+<script>
+    function updateTable(text) {
+        console.info(text);
+        json = JSON.stringify({ "query" : text })
+        fetch("{{url_for('carSearchPage')}}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: json
+        }).then((response) => response.text())
+            .then((text) => {
+                document.getElementById("carTable").innerHTML = text
+            });
+    }
+</script>
+{%endblock%}
 
-    <script>
-        function updateTable(text) {
-            console.info(text);
-            json = JSON.stringify({ "query" : text })
-            fetch("{{url_for('carSearchPage')}}", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: json
-            }).then((response) => response.text())
-                .then((text) => {
-                    document.getElementById("carTable").innerHTML = text
-                });
-        }
-    </script>
-
-</head>
-
+{%block body%}
 <body onload="updateTable('')">
     <p>
         <a href="{{url_for('indexPage')}}">Powrót</a>
@@ -33,5 +30,4 @@
     <div id="carTable"></div>
 
 </body>
-
-</html>
+{%endblock%}

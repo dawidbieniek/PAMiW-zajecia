@@ -1,35 +1,27 @@
-<!DOCTYPE html>
-<html>
+{%extends "base.html"%}
+{%block title%}Strona główna{%endblock%}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Wypożyczalnia samochodów - Strona główna</title>
-
-</head>
-
-<body>
-    <h1>Wypożyczalnia samochodów</h1>
-    {%if not user%}
-    <p>
-        <a href="{{url_for('loginPage')}}">Logowanie</a>
-    </p>
-    {%else%}
-    <p>Zalogowano jako: {{user.username}}</p>
-    <p>
-        <a href="{{url_for('accountPage')}}">Konto</a>
-    </p>
-    <p>
-        <a href="{{url_for('logout')}}">Wyloguj</a>
-    </p>
-    {%endif%}
-    <p>
-        <a href="{{url_for('carSearchPage')}}">Wyszukiwanie samochodów</a>
-    </p>
-    {%if user and user.isadmin%}
-    <p>
-        <a href="{{url_for('userListPage')}}">Lista użytkowników</a>
-    </p>
-    {%endif%}
-</body>
-
-</html>
+{%block contents%}
+<h1>Wypożyczalnia samochodów</h1>
+{%if not user%}
+<p>
+    <a href="{{url_for('loginPage')}}">Logowanie</a>
+</p>
+{%else%}
+<p>Zalogowano jako: {{user.username}}</p>
+<p>
+    <a href="{{url_for('accountPage')}}">Konto</a>
+</p>
+<p>
+    <a href="{{url_for('logout')}}">Wyloguj</a>
+</p>
+{%endif%}
+<p>
+    <a href="{{url_for('carSearchPage')}}">Wyszukiwanie samochodów</a>
+</p>
+{%if user and user.isadmin%}
+<p>
+    <a href="{{url_for('userListPage')}}">Lista użytkowników</a>
+</p>
+{%endif%}
+{%endblock%}

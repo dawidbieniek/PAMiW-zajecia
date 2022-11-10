@@ -1,32 +1,23 @@
-<!DOCTYPE html>
-<html>
+{%extends "base.html"%}
+{%block title%}Lista użytkowników{%endblock%}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Lista użytkowników</title>
-</head>
-
-<body>
-    <p>
-        <a href="{{url_for('indexPage')}}">Powrót</a>
-    </p>
-    <h1>Lista użytkowników</h1>
-    <br>
-    {% if users|length %}
-    <table>
-        <tbody>
-            {% for row in users %}
-            <tr>
-                {% for data in row %}
-                <td>{{ data }}</td>
-                {% endfor %}
-            </tr>
+{%block contents%}
+<p><a href="{{url_for('indexPage')}}">Powrót</a></p>
+<h1>Lista użytkowników</h1>
+<br>
+{% if users|length %}
+<table>
+    <tbody>
+        {% for row in users %}
+        <tr>
+            {% for data in row %}
+            <td>{{ data }}</td>
             {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p>Nie znaleziono żadnych użytkowników</p>
-    {% endif %}
-</body>
-
-</html>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Nie znaleziono żadnych użytkowników</p>
+{% endif %}
+{%endblock%}
