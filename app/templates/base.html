@@ -4,22 +4,31 @@
 <head>
     <meta charset="UTF-8">
     <title>{%block title%}{%endblock%}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
     {%block head%}{%endblock%}
 </head>
 
 <body>
-    <ul class="navbar">
-    <li class="float-left">
-        <a href="{{url_for('indexPage')}}">Strona główna</a>
-    </li>
-    <li class="float-left">
-        <a href="{{url_for('carSearchPage')}}">Wyszukiwanie</a>
-    </li>
-    <li class="float-right">
-        <a href="{{url_for('loginPage')}}">Logowanie</a>
-    </li>
+    <ul class='navbar'>
+        <li>
+            <a href="{{url_for('indexPage')}}">Strona główna</a>
+        </li>
+        <li>
+            <a href="{{url_for('carSearchPage')}}">Wyszukiwanie</a>
+        </li>
+        {% if session.get('login', None) == None %}
+        <li class="end-item">
+            <a href="{{url_for('loginPage')}}">Logowanie</a>
+        </li>
+        {%else%}
+        <li class="end-item">
+            <a href="{{url_for('logout')}}">Wyloguj</a>
+        </li>
+        <li class="end-item">
+            <a href="{{url_for('accountPage')}}">{{session["login"]["username"]}}</a>
+        </li>
+        {%endif%}
     </ul>
     <div class="page">
         <div class="contents">

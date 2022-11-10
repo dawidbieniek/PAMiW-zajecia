@@ -11,15 +11,6 @@ html,body,h1,h2,h3,h4,h5,h6
     font-family: "Roboto", sans-serif;
 }
 
-.float-left
-{
-    float: left;
-}
-
-.float-right
-{
-    float: right;
-}
 
 body
 {
@@ -51,8 +42,14 @@ ul.navbar
 
 ul.navbar li
 {
+    float: left;
     margin-right:4px;
     margin-left:4px;
+}
+
+ul.navbar li.end-item
+{
+    float:right;
 }
 
 ul.navbar li a

@@ -1,11 +1,13 @@
-{%extends "baseBare.html"%}
+{%extends "base.html"%}
 {%block title%}Wyszukiwanie samochodów{%endblock%}
 
 {%block head%}
 <script>
+    window.addEventListener("load", () => updateTable(""))
+
     function updateTable(text) {
         console.info(text);
-        json = JSON.stringify({ "query" : text })
+        json = JSON.stringify({ "query": text })
         fetch("{{url_for('carSearchPage')}}", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -18,16 +20,14 @@
 </script>
 {%endblock%}
 
-{%block body%}
-<body onload="updateTable('')">
-    <p>
-        <a href="{{url_for('indexPage')}}">Powrót</a>
-    </p>
-    <h1>Wyszukiwanie samochodów</h1>
-    <br>
-    <input oninput="updateTable(this.value)" placeholder="Nazwa samochodu" type="text" />
+{%block contents%}
+<p>
+    <a href="{{url_for('indexPage')}}">Powrót</a>
+</p>
+<h1>Wyszukiwanie samochodów</h1>
+<br>
+<input oninput="updateTable(this.value)" placeholder="Nazwa samochodu" type="text" />
 
-    <div id="carTable"></div>
+<div id="carTable"></div>
 
-</body>
 {%endblock%}
