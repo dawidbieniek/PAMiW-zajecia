@@ -27,10 +27,33 @@
 <p><a href="{{url_for('loginPage')}}">Powrót</a></p>
 <h1>Rejestracja</h1>
 <form onsubmit="sendForm(this)" method="post" enctype="multipart/form-data">
-    Login:<input name="username" maxlength="32" type="text" />
-    Hasło:<input name="password" maxlength="32" type="password" />
-    Powtórz hasło:<input name="repPassword" maxlength="32" type="password" />
-    <button type="submit" >Zarejestruj</button>
+    <table>
+        <tbody>
+            <tr>
+                <td>Login:</td>
+                <td>
+                    <input name="username" maxlength="32" type="text" required />
+                </td>
+            </tr>
+            <tr>
+                <td>Hasło:</td>
+                <td>
+                    <input name="password" maxlength="32" type="password" required />
+                </td>
+            </tr>            
+            <tr>
+                <td>Powtórz hasło:</td>
+                <td>
+                    <input name="repPassword" maxlength="32" type="password" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button type="submit">Zarejestruj</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
 </form>
 <p id="msg" style="display:none;"></p>
 {%endblock%}
