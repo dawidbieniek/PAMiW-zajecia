@@ -1,39 +1,18 @@
-{%extends "base.html"%}
+{%extends "baseFormPage.html"%}
 {%block title%}Logowanie{%endblock%}
 
-{%block head%}
-<script>
-    function sendForm(form) {
-        event.preventDefault();
-
-        data = new FormData(form);
-        json = JSON.stringify(Object.fromEntries(data));
-
-        fetch("{{url_for('loginPage')}}", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: json
-        })
-            .then((response) => response.text())
-            .then((text) => {
-                document.getElementById("msg").style.display = "Block"
-                document.getElementById("msg").innerText = text
-            });
-    }
-</script>
-{%endblock%}
-
-{%block contents%}
+{%block preForm%}
 <p><a href="{{url_for('indexPage')}}">Powrót</a></p>
-<h1 class="test">Logowanie</h1>
-{%set url = url_for('loginPage')%}
-<form onsubmit="sendForm(this)" method="POST" enctype="multipart/form-data">
+<h1>Logowanie</h1>
+{%endblock%}
+{%block form%}
+<form action="{{url_for('loginPage')}}" method="POST" enctype="multipart/form-data">
     <table>
         <tbody>
             <tr>
                 <td>Login:</td>
                 <td>
-                    <input name="username" maxlength="32" type="text" required />
+                    <input name="username" value="{{username}}" maxlength="32" type="text" required />
                 </td>
             </tr>
             <tr>
@@ -50,6 +29,7 @@
         </tbody>
     </table>
 </form>
+{%endblock%}
+{%block postForm%}
 <p><a href="{{url_for('registerPage')}}">Rejestracja</a></p>
-<p id="msg" style="display:none;"></p>
 {%endblock%}
