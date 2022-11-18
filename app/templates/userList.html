@@ -6,17 +6,19 @@
 <h1>Lista użytkowników</h1>
 <br>
 {% if users|length %}
-<table>
-    <tbody>
-        {% for row in users %}
-        <tr>
-            {% for data in row %}
-            <td>{{ data }}</td>
+<div class="searchTable">
+    <table>
+        <tbody>
+            {% for row in users %}
+            <tr>
+                {% for data in row %}
+                <td>{{ data }}</td>
+                {% endfor %}
+            </tr>
             {% endfor %}
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+        </tbody>
+    </table>
+</div>
 {% else %}
 <p>Nie znaleziono żadnych użytkowników</p>
 {% endif %}

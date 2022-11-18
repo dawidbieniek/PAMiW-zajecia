@@ -26,8 +26,12 @@
 </p>
 <h1>Wyszukiwanie samochodów</h1>
 <br>
-<input oninput="updateTable(this.value)" placeholder="Nazwa samochodu" type="text" />
-
-<div id="carTable"></div>
+<div class="center">
+    <input class="searchInput" oninput="updateTable(this.value)" placeholder="Nazwa samochodu" type="text" />
+</div>
+<br>
+<div class="center">
+    <div class="searchTable" id="carTable"></div>
+</div>
 
 {%endblock%}
