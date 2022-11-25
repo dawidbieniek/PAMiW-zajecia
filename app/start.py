@@ -15,7 +15,7 @@ DB_PATH = "../db/database.db"
 
 
 app = Flask(__name__)
-app.jinja_env.line_statement_prefix = '#'
+app.jinja_env.line_statement_prefix = "#"
 
 app.config["SECRET_KEY"] = secrets.token_urlsafe(16)
 
@@ -50,7 +50,7 @@ def loginPage():
                 username=(username if username else None),
             )
 
-        userData = querySingle(f"SELECT * FROM users WHERE username = '{username}'")
+        userData = querySingle(f"SELECT * FROM user WHERE username = '{username}'")
         if userData and checkPassword(username, password):
             session["login"] = User(userData[0], userData[2]).__dict__
             return redirect(url_for("indexPage"))
@@ -84,14 +84,14 @@ def registerPage():
                 "register.html", msg="Hasła muszą być identyczne", username=username
             )
         # Check if login already exists
-        if len(query(f"SELECT username FROM users WHERE username = '{username}'")) > 0:
+        if len(query(f"SELECT username FROM user WHERE username = '{username}'")) > 0:
             return render_template(
                 "register.html", msg="Login już jest zajęty", username=username
             )
         # Register user
         hashed = hashpw(password.encode("utf-8"), gensalt())
         query(
-            f"INSERT INTO users VALUES ('{username}', '{hashed.decode('utf-8')}', FALSE)"
+            f"INSERT INTO user VALUES ('{username}', '{hashed.decode('utf-8')}', FALSE)"
         )
         return redirect(url_for("loginPage"))
 
@@ -128,7 +128,7 @@ def changePasswordPage():
         # Update password
         hashed = hashpw(newPassword.encode("utf-8"), gensalt())
         query(
-            f"UPDATE users SET password = '{hashed.decode('utf-8')}' WHERE username = '{username}'"
+            f"UPDATE user SET password = '{hashed.decode('utf-8')}' WHERE username = '{username}'"
         )
         return redirect(url_for("loginPage"))
     # GET
@@ -142,9 +142,33 @@ def accountPage():
         return render_template("account.html", user=user)
     return redirect(url_for("loginPage"))
 
+
 @app.route("/account/messages")
 def emailPage():
-    return redirect(url_for(indexPage))
+    return render_template("emails.html")
+
+
+@app.route("/account/messages/newMessage", methods=["GET", "POST"])
+def newEmailPage():
+    if not isLoggedin():
+        return redirect(url_for("loginPage"))
+    if request.method == "POST":
+        fromUsername = session["login"]["username"]
+        toUsername = request.form.get("to")
+        content = request.form.get("content")
+
+        if (
+            len(query(f"SELECT username FROM user WHERE username = '{toUsername}'"))
+            == 0
+        ):
+            return render_template("newEmail.html", msg="Podany adresat nie istnieje", toUsername=toUsername, content=content)
+        query(
+            f"INSERT INTO email (toUsername, fromUsername, content) VALUES ('{toUsername}', '{fromUsername}', '{content}')"
+        )
+        return redirect(url_for("emailPage"))
+
+    return render_template("newEmail.html")
+
 
 @app.route("/carSearch", methods=["GET", "POST"])
 def carSearchPage():
@@ -152,9 +176,9 @@ def carSearchPage():
     if request.method == "POST":
         text = request.get_json().get("query")
         if not text or text == "":
-            cars = query(f"SELECT * FROM cars")
+            cars = query(f"SELECT * FROM car")
         else:
-            cars = query(f"SELECT * FROM cars WHERE carName LIKE '%{text}%'")
+            cars = query(f"SELECT * FROM car WHERE carName LIKE '%{text}%'")
         return render_template("tables/carTable.html", cars=cars), 200
 
     # GET
@@ -165,8 +189,23 @@ def carSearchPage():
 def userListPage():
     if not isCurrentUserAdmin():
         return abort(403)
-    users = query("SELECT * FROM users")
+    users = query("SELECT * FROM user")
     return render_template("userList.html", users=users)
+
+
+@app.route("/api/messageCount")
+def apiMessageCount():
+    if not isLoggedin():
+        return 0
+    numberOfMsgs = querySingle(
+        f"SELECT COUNT(*) FROM email WHERE toUsername = '{session['login']['username']}'"
+    )[0]
+    return str(numberOfMsgs), 200
+
+
+@app.route("/api/isLoggedIn")
+def apiLoggedIn():
+    return str(isLoggedin()), 200
 
 
 def query(sql):
@@ -183,7 +222,7 @@ def querySingle(sql):
 
 
 def checkPassword(username, password):
-    userData = querySingle(f"SELECT * FROM users WHERE username = '{username}'")
+    userData = querySingle(f"SELECT * FROM user WHERE username = '{username}'")
     if not userData:
         return False
     encodedPassword = password.encode("utf-8")
@@ -201,7 +240,7 @@ def isCurrentUserAdmin():
 
     return (
         querySingle(
-            f"SELECT isadmin FROM users WHERE username = '{session['login']['username']}'"
+            f"SELECT isadmin FROM user WHERE username = '{session['login']['username']}'"
         )
     )[0] == 1
 

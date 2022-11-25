@@ -1,0 +1,11 @@
+#extends "base.html"
+#block title
+Wiadomości
+#endblock
+
+#block contents
+<form action="{{url_for('newEmailPage')}}", method="GET">
+    <button type="submit">Nowa wiadomość</button>
+</form>
+
+#endblock

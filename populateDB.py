@@ -10,7 +10,7 @@ if __name__ == "__main__":
     db = sqlite3.connect("db/database.db")
 
     with open("db/testData.sql") as f:
-        if(len(db.execute("SELECT * FROM users").fetchall()) > 0):
+        if(len(db.execute("SELECT * FROM user").fetchall()) > 0):
             print("Database is already populated")
             db.close()
             exit()
@@ -18,7 +18,8 @@ if __name__ == "__main__":
         db.executescript(f.read())
 
     print("Tables content:")
-    printTable("users")
-    printTable("cars")
+    printTable("user")
+    printTable("car")
+    printTable("email")
 
     db.close()

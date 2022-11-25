@@ -2,23 +2,31 @@
 {%block title%}Strona główna{%endblock%}
 
 {%block contents%}
-<h1>Wypożyczalnia samochodów</h1>
-{%if not user%}
-<p>
-    <a href="{{url_for('loginPage')}}">Logowanie</a>
-</p>
-{%else%}
-<p>Zalogowano jako: {{user.username}}</p>
-<p>
-    <a href="{{url_for('accountPage')}}">Konto</a>
-</p>
-<p>
-    <a href="{{url_for('logout')}}">Wyloguj</a>
-</p>
-{%endif%}
-<p>
-    <a href="{{url_for('carSearchPage')}}">Wyszukiwanie samochodów</a>
-</p>
+<h1>Funkcjonalność</h1>
+<ul>
+    <li>Logowanie
+        <ul>
+            <li>Logowanie się na konto</li>
+            <li>Rejestrowanie nowych kont</li>
+            <li>Zmiana hasła po zalogowaniu</li>
+            <li>Hashowanie haseł</li>
+            <li>Różne uprawnienia użytkowników</li>
+            <li>Wyświetlanie informacji o kontach</li>
+            <li>Wylogowywanie się</li>
+        </ul>
+    </li>
+    <li>Pasek nawigacyjny</li>
+    <li>Wyszukiwanie samochodów z użyciem ajax'a</li>
+    <li>Wyświetlanie listy kont</li>
+    <li>Wyświetlanie informacji o błędach wypełniania formularzy</li>
+    <li>Wiadomości
+        <ul>
+            <li>Powiadomienia o nowych wiadomościach</li>
+            <li>Możliwość wysyłania wiadomości z zawartością</li>
+        </ul>
+    </li>
+    <li>Częściowa stylizacja CSS</li>
+</ul>
 {%if user and user.isadmin%}
 <p>
     <a href="{{url_for('userListPage')}}">Lista użytkowników</a>

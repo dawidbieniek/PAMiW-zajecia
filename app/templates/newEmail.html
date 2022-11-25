@@ -1,0 +1,19 @@
+#extends "base.html"
+#block title
+Nowa wiadomość
+#endblock
+
+#block contents
+<form class="email panel" action="{{url_for('newEmailPage')}}", method="POST", enctype="multipart/form-data">
+    <h1>Nowa wiadomość</h1>
+    #if msg is defined
+    <span class="error-message">{{msg}}</span>
+    #endif
+    #if toUsername is not defined
+    #set toUsername = ""
+    #endif
+    <input class="small-input" name="to" maxlength="32" type="text" placeholder="Do" value={{toUsername}} required />
+    <textarea class="big-input" name="content" type="text" placeholder="Wiadomość" required>{{content}}</textarea>
+    <button type="submit">Wyślij wiadomość</button>
+</form>
+#endblock

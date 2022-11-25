@@ -7,13 +7,16 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+
+    <script src="{{url_for('static', filename='js/navbar.js')}}"></script>
+
     {%block head%}{%endblock%}
 </head>
 
 <body>
     <div class="navbar">
         <ul>
-            <li class="notification">
+            <li>
                 <a href="{{url_for('indexPage')}}">Strona główna</a>
             </li>
             <li>
@@ -30,10 +33,10 @@
             <li class="end-item">
                 <a href="{{url_for('accountPage')}}">Konto</a>
             </li>
-            <li class="end-item notification">                
+            <li class="end-item notification">
                 <a href="{{url_for('emailPage')}}">
                     <span>Wiadomości</span>
-                    <span class="badge"></span>
+                    <span id="badge" class="badge" style="display: none;"></span>
                 </a>
             </li>
             #endif

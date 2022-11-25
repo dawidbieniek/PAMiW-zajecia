@@ -3,7 +3,6 @@
     --gray: rgba(0,0,0, 0.6);
     --dark-gray: rgba(0,0,0, 0.8);
     --input-bg: rgba(0,0,0, 0.1);
-    --error:rgba(255, 0, 0, 0.8);
     --accent:rgb(66, 133, 244);
 }
 
@@ -79,16 +78,4 @@
     color: var(--accent);
     font-size: 0.8em;
     text-decoration: none;
-}
-
-.form-group .error-message{
-    background: var(--error);
-    padding: 4px;
-    width: 100%;
-    border: 0;
-    border-radius: 4px;
-    color: white;
-    font-family: inherit;
-    font-size: inherit;
-    font-weight: bold;
 }

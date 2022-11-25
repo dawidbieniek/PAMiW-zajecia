@@ -1,10 +1,15 @@
 :root {
-    --page-background-color: rgb(255, 255, 255);
-    --background-gradient:linear-gradient(45deg, rgba(66, 183, 245,0.8), rgba(66, 245, 189,0.4));
-    --navbar-color: rgb(96, 105, 102);
-    --navbar-color-hover: rgb(54, 59, 57);
-    --hover-color: rgb(133, 144, 140);
+    --background-gradient:linear-gradient(90deg, rgba(66, 183, 245,0.8), rgba(66, 245, 189,0.4));
     --table-odd-row-color: rgb(209, 212, 211);
+    
+    --accent:rgb(66, 133, 244);
+    --dark-gray: rgba(0,0,0, 0.8);
+    --error:rgba(255, 0, 0, 0.8);
+    
+    --input-bg: rgba(0,0,0, 0.1);
+    --table-even-row-color:rgba(0,0,0, 0.2);
+    --table-odd-row-color:rgba(0,0,0, 0.10);
+    --table-hover: rgba(0,0,0, 0.30);
 }
 
 body{
@@ -23,52 +28,155 @@ body{
     width: 40%;
 }
 
-.searchInput,
-.searchTable {
-    width: 100%;
-    font-size: 1.2em;
-    border: 2px solid gray;
-    border-radius: 5px;
-    margin-bottom: 5;
+.search-table {
+    background: white;
+    margin: 10px auto 10px;
+    border-radius: 8px;
+    width: 60%;
 }
 
-.searchTable {
-    overflow-x: auto;
-    overflow-y: auto;
-}
-
-.searchTable table
-{
-    width: 100%;
-}
-
-table,
-th,
-td {
-    border-collapse: collapse;
+.search-table .table-title {
     text-align: left;
-}
-
-th,
-td {
-    padding: 5px;
-    min-width: 20px;
-}
-
-th
-{
-    border-bottom: 2px;
-}
-
-.searchTable table tr:nth-child(even) {
-    background-color: var(--table-odd-row-color);
-}
-
-.searchTable table tr:hover {
-    background-color: var(--hover-color);
-}
-
-th {
-    background-color: var(--navbar-color);
+    width: auto;
     color: white;
+    border-radius: 8px;
+    border: 1px solid var(--gray);
+    background-color: var(--accent);
+    padding: 15px;
+}
+
+.search-table .table-title h2 {
+    margin: 0;
+    padding:0;
+}
+
+.search-table input {
+    background: var(--input-bg);
+    width: 100%;
+    border: 1px;
+    border-radius: 4px;
+    border: 2px solid var(--dark-gray);
+    box-sizing: border-box;
+    padding: 6px 10px;
+    font-family: inherit;
+    font-size: inherit;
+    font-size: 1.4em;
+    transition: 0.3s ease;
+    margin: 5px 0;
+}
+
+.search-table table {
+    width: 100%;
+    font-size: 1.4em;
+    border-collapse: collapse;
+}
+
+
+.search-table table th {
+    padding: 4px 10px;
+    color: white;
+    text-align: left;
+    background: var(--accent);
+    border-bottom: solid 2px #d8d8d8;
+}
+
+.search-table table tbody {
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 2px solid var(--dark-gray);
+    border-radius: 8px;
+}
+
+.search-table table tr {
+    background: var(--table-odd-row-color);
+    border-bottom: 1px solid var(--dark-gray);
+}
+
+.search-table table tr:nth-child(2n){
+    background: var(--table-even-row-color);
+}
+
+.search-table table tr:hover{
+    transition: background-color 150ms ease-out;
+    background: var(--table-hover);
+}
+
+.search-table table tr td {
+    text-align: left;   
+    padding: 4px 6px;
+    border-left: 0;
+    border-right: 0;
+    cursor: pointer;
+}
+
+
+button {
+    background: var(--accent);
+    color:white;
+    padding:5px;
+    border: 1px solid var(--dark-gray);
+    font-size: 1.4em;
+    border-radius: 5px;
+}
+
+.error-message{
+    background: var(--error);
+    padding: 4px;
+    width: 100%;
+    border: 0;
+    border-radius: 4px;
+    color: white;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: bold;
+}
+
+.panel {
+    position: relative;
+    background: white;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 800px;
+    border-radius: 8px;
+    margin: 10px auto 10px;
+    overflow: hidden;
+    padding:20px;
+    color:var(--dark-gray);
+}
+
+.email h1 {
+    color: var(--accent);
+    font-size: 24px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+
+.email .small-input,
+.email .big-input {
+    width: 100%;
+    color:inherit;
+    font-family: inherit;
+    font-size: 1.2em;
+    padding:5px;
+    border-radius: 5px;
+    text-align: start left;
+    margin-top: 10px;
+}
+
+.email .big-input {
+    min-height: 400px;
+    resize: none;
+}
+
+.email button {
+    position:absolute;
+    top:30px;
+    right:25px;
+    background: var(--accent);
+    color:white;
+    font-size: 1.4em;
+    padding:5px;
+    border: 1px solid var(--dark-gray);
+    border-radius: 5px;
 }

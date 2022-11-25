@@ -1,7 +1,10 @@
-{%extends "base.html"%}
-{%block title%}Wyszukiwanie samochodów{%endblock%}
+#extends "base.html"
 
-{%block head%}
+#block title
+Wyszukiwanie samochodów
+#endblock
+
+#block head
 <script>
     window.addEventListener("load", () => updateTable(""))
 
@@ -18,20 +21,15 @@
             });
     }
 </script>
-{%endblock%}
+#endblock
 
-{%block contents%}
-<p>
-    <a href="{{url_for('indexPage')}}">Powrót</a>
-</p>
-<h1>Wyszukiwanie samochodów</h1>
-<br>
-<div class="center">
-    <input class="searchInput" oninput="updateTable(this.value)" placeholder="Nazwa samochodu" type="text" />
-</div>
-<br>
-<div class="center">
-    <div class="searchTable" id="carTable"></div>
+#block contents
+<div class="search-table">
+    <div class="table-title">
+        <h2>Wyszukiwanie samochodów</h2>
+    </div>
+    <input oninput="updateTable(this.value)" placeholder="Nazwa samochodu" type="text" />
+    <div class="container" id="carTable"></div>
 </div>
 
-{%endblock%}
+#endblock
