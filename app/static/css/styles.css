@@ -1,71 +1,20 @@
 :root {
-    --body-background-color: rgb(0, 70, 199);
     --page-background-color: rgb(255, 255, 255);
+    --background-gradient:linear-gradient(45deg, rgba(66, 183, 245,0.8), rgba(66, 245, 189,0.4));
     --navbar-color: rgb(96, 105, 102);
     --navbar-color-hover: rgb(54, 59, 57);
     --hover-color: rgb(133, 144, 140);
     --table-odd-row-color: rgb(209, 212, 211);
 }
 
-html,
-body,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+body{
+    margin:0;
+    background: var(--background-gradient);
     font-family: "Roboto", sans-serif;
 }
 
-
-body {
-    margin: 0;
-    background-color: var(--body-background-color);
-}
-
-.page {
-    background-color: var(--page-background-color);
-    padding: 10px;
-}
-
-/* .contents
-{
-
-} */
-
-ul.navbar {
-    background-color: var(--navbar-color);
-    max-width: 100%;
-    list-style-type: none;
-    margin: 0;
-    padding: 4px;
-    overflow: hidden;
-    height: max-content;
-}
-
-ul.navbar li {
-    float: left;
-    margin-right: 4px;
-    margin-left: 4px;
-}
-
-ul.navbar li.end-item {
-    float: right;
-}
-
-ul.navbar li a {
-    display: block;
-    padding: 8px;
-    appearance: button;
-    text-decoration: none;
-    color: inherit;
-    background-color: inherit;
-    border-radius: 20px;
-}
-
-ul.navbar li a:hover {
-    background-color: var(--navbar-color-hover)
+.contents{
+    padding: 10pt;
 }
 
 .center {

@@ -13,7 +13,9 @@ from User import User
 
 DB_PATH = "../db/database.db"
 
+
 app = Flask(__name__)
+app.jinja_env.line_statement_prefix = '#'
 
 app.config["SECRET_KEY"] = secrets.token_urlsafe(16)
 
@@ -34,7 +36,6 @@ def logout():
 
 @app.route("/login", methods=["GET", "POST"])
 def loginPage():
-    log("LOGIN")
     if isLoggedin():
         return redirect(url_for("indexPage"))
     # POST
@@ -141,6 +142,9 @@ def accountPage():
         return render_template("account.html", user=user)
     return redirect(url_for("loginPage"))
 
+@app.route("/account/messages")
+def emailPage():
+    return redirect(url_for(indexPage))
 
 @app.route("/carSearch", methods=["GET", "POST"])
 def carSearchPage():

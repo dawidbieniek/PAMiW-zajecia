@@ -1,0 +1,78 @@
+:root {
+    --navbar-color: rgb(27, 57, 105);
+    --navbar-text-color: white;
+}
+
+.navbar>ul {
+    background-color: var(--navbar-color);
+    color: var(--navbar-text-color);
+    border: 1px solid gray;
+    z-index: 100;
+    max-width: 100%;
+    list-style-type: none;
+    margin: 0;
+    padding: 4px;
+    overflow: hidden;
+    height: max-content;
+    box-shadow: 1px 1px 5px rgba(0,0,0,.5);
+    font-size: 1.2em;
+}
+
+.navbar>ul>li {
+    float: left;
+    padding: 2px, 0px;
+    margin: 0px 4px;
+    background-color: inherit;
+    color: inherit;
+}
+
+.navbar>ul>li.end-item {
+    float: right;
+}
+
+.navbar>ul>li>a {
+    display: block;
+    padding: 4px;
+    appearance: button;
+    text-decoration: none;
+    border-radius: 14px;
+    background-color: inherit;
+    color: inherit;
+}
+
+.navbar>ul>li>a:hover {
+    background-color: var(--navbar-text-color);
+    color: var(--navbar-color);
+}  
+  
+.navbar>ul>li.notification .badge {
+    padding: 2px 6px;
+    margin: 0px 2px;
+    border:2px solid white;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 0.7em;
+    background: red;
+    color: white;
+    vertical-align: middle;
+    animation-name: blink;
+    animation-duration: 6s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+  }
+
+  @keyframes blink {
+    0% {
+        border-color: red;
+    }
+    70% {
+        border-color: red;
+    }
+    85%{
+        border-color: white;
+    }
+    100% {
+        border-color: red;
+    }
+  }
+  

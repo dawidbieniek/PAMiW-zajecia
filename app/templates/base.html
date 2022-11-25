@@ -4,36 +4,43 @@
 <head>
     <meta charset="UTF-8">
     <title>{%block title%}{%endblock%}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
     {%block head%}{%endblock%}
 </head>
 
 <body>
-    <ul class='navbar'>
-        <li>
-            <a href="{{url_for('indexPage')}}">Strona główna</a>
-        </li>
-        <li>
-            <a href="{{url_for('carSearchPage')}}">Wyszukiwanie</a>
-        </li>
-        {% if session.get('login', None) == None %}
-        <li class="end-item">
-            <a href="{{url_for('loginPage')}}">Logowanie</a>
-        </li>
-        {%else%}
-        <li class="end-item">
-            <a href="{{url_for('logout')}}">Wyloguj</a>
-        </li>
-        <li class="end-item">
-            <a href="{{url_for('accountPage')}}">{{session["login"]["username"]}}</a>
-        </li>
-        {%endif%}
-    </ul>
-    <div class="page">
-        <div class="contents">
-            {%block contents%}{%endblock%}
-        </div>
+    <div class="navbar">
+        <ul>
+            <li class="notification">
+                <a href="{{url_for('indexPage')}}">Strona główna</a>
+            </li>
+            <li>
+                <a href="{{url_for('carSearchPage')}}">Wyszukiwanie</a>
+            </li>
+            #if session.get('login', None) == None
+            <li class="end-item">
+                <a href="{{url_for('loginPage')}}">Logowanie</a>
+            </li>
+            #else
+            <li class="end-item">
+                <a href="{{url_for('logout')}}">Wyloguj</a>
+            </li>
+            <li class="end-item">
+                <a href="{{url_for('accountPage')}}">Konto</a>
+            </li>
+            <li class="end-item notification">                
+                <a href="{{url_for('emailPage')}}">
+                    <span>Wiadomości</span>
+                    <span class="badge"></span>
+                </a>
+            </li>
+            #endif
+        </ul>
+    </div>
+    <div class="contents">
+        {%block contents%}{%endblock%}
     </div>
 </body>
 
