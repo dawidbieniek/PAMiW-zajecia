@@ -19,6 +19,7 @@ Logowanie
         <label>Hasło</label>
         <input name="password" maxlength="32" type="password" required />
     </div>
+    <input type="hidden" name="next" value="{{request.args.get('next', '')}}" />
     #endblock
     #block afterMsg
     <div class="form-group">

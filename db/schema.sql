@@ -22,6 +22,7 @@ CREATE TABLE email
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     toUsername TEXT(32),
     fromUsername TEXT(32),
+    topic TEXT(256),
     content TEXT,
     FOREIGN KEY(toUsername) REFERENCES user(username),
     FOREIGN KEY(fromUsername) REFERENCES user(username)

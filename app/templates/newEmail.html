@@ -12,7 +12,8 @@ Nowa wiadomość
     #if toUsername is not defined
     #set toUsername = ""
     #endif
-    <input class="small-input" name="to" maxlength="32" type="text" placeholder="Do" value={{toUsername}} required />
+    <input class="small-input" name="to" maxlength="32" type="text" placeholder="Do" value={{toUsername}} />
+    <input class="small-input" name="topic" maxlength="256" type="text" placeholder="Temat" required />
     <textarea class="big-input" name="content" type="text" placeholder="Wiadomość" required>{{content}}</textarea>
     <button type="submit">Wyślij wiadomość</button>
 </form>

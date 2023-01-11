@@ -31,8 +31,8 @@ INSERT INTO car (carName, color, price) VALUES ("2Opel Astra", "White", 139);
 INSERT INTO car (carName, color, price) VALUES ("2KIA Stonic", "White", 139);
 INSERT INTO car (carName, color, price) VALUES ("2KIA Ceed", "White", 169);
 
-INSERT INTO email (toUsername, fromUsername, content) VALUES ("login", "innyLogin", "Wiadomość");
-INSERT INTO email (toUsername, fromUsername, content) VALUES ("login", "test", "Wiadomość inna");
-INSERT INTO email (toUsername, fromUsername, content) VALUES ("admin", "login", "Wiadomość 1");
-INSERT INTO email (toUsername, fromUsername, content) VALUES ("admin", "login", "Wiadomość 2");
-INSERT INTO email (toUsername, fromUsername, content) VALUES ("admin", "login", "Wiadomość 3");
+INSERT INTO email (toUsername, fromUsername, topic, content) VALUES ("login", "innyLogin", "Temat", "Wiadomość");
+INSERT INTO email (toUsername, fromUsername, topic, content) VALUES ("login", "test", "Temat", "Wiadomość inna");
+INSERT INTO email (toUsername, fromUsername, topic, content) VALUES ("admin", "login", "Temat", "Wiadomość 1");
+INSERT INTO email (toUsername, fromUsername, topic, content) VALUES ("admin", "login", "Temat", "Wiadomość 2");
+INSERT INTO email (toUsername, fromUsername, topic, content) VALUES ("admin", "login", "Temat", "Wiadomość 3");

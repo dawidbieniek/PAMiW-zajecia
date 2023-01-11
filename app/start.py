@@ -1,26 +1,30 @@
 from flask import Flask, request, render_template, url_for, redirect, session, abort
 from bcrypt import checkpw, gensalt, hashpw
-
-# from flask_login import LoginManager
 from contextlib import closing
+from functools import wraps
 import secrets
-
 import sqlite3
-
 import sys
 
 from User import User
 
 DB_PATH = "../db/database.db"
 
-
 app = Flask(__name__)
+
 app.jinja_env.line_statement_prefix = "#"
 
+app.config["SESSION_PERMANENT"] = False
 app.config["SECRET_KEY"] = secrets.token_urlsafe(16)
 
-# loginManager = LoginManager()
-# loginManager.init_app(app)
+def requireLogin(func):
+    @wraps(func)
+    def secure_function(*args, **kwargs):
+        if not isLoggedin():
+            log("Redirect")
+            return redirect(url_for("loginPage", next=request.url))
+        return func(*args, **kwargs)
+    return secure_function
 
 
 @app.route("/")
@@ -30,9 +34,10 @@ def indexPage():
 
 @app.route("/logout")
 def logout():
-    session.pop("login", None)
+    if(session.get("login", None) != None):
+        # session.pop("login", None)
+        session.clear()
     return redirect(url_for("indexPage"))
-
 
 @app.route("/login", methods=["GET", "POST"])
 def loginPage():
@@ -42,6 +47,7 @@ def loginPage():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+        nextUrl = request.form.get("next")
 
         if username == "" or password == "":
             return render_template(
@@ -53,13 +59,17 @@ def loginPage():
         userData = querySingle(f"SELECT * FROM user WHERE username = '{username}'")
         if userData and checkPassword(username, password):
             session["login"] = User(userData[0], userData[2]).__dict__
+            log(nextUrl)
+            if(nextUrl):
+                return redirect(nextUrl)
             return redirect(url_for("indexPage"))
 
         return render_template(
             "login.html", msg="Niepoprawne dane logowania", username=username
         )
     # GET
-    return render_template("login.html")
+    log(request.args)
+    return render_template("login.html", next=request.args.get("next", ""))
 
 
 @app.route("/login/register", methods=["GET", "POST"])
@@ -98,11 +108,10 @@ def registerPage():
     # GET
     return render_template("register.html")
 
-
 @app.route("/login/changePassword", methods=["GET", "POST"])
+@requireLogin
 def changePasswordPage():
-    if not isLoggedin():
-        return abort(403)
+
     # POST
     if request.method == "POST":
         password = request.form.get("password")
@@ -136,7 +145,9 @@ def changePasswordPage():
 
 
 @app.route("/account", methods=["GET"])
+@requireLogin
 def accountPage():
+
     user = session.get("login", None)
     if user:
         return render_template("account.html", user=user)
@@ -144,17 +155,19 @@ def accountPage():
 
 
 @app.route("/account/messages")
+@requireLogin
 def emailPage():
+
     return render_template("emails.html")
 
-
 @app.route("/account/messages/newMessage", methods=["GET", "POST"])
+@requireLogin
 def newEmailPage():
-    if not isLoggedin():
-        return redirect(url_for("loginPage"))
+
     if request.method == "POST":
         fromUsername = session["login"]["username"]
         toUsername = request.form.get("to")
+        topis = request.form.get("topic")
         content = request.form.get("content")
 
         if (
@@ -163,7 +176,7 @@ def newEmailPage():
         ):
             return render_template("newEmail.html", msg="Podany adresat nie istnieje", toUsername=toUsername, content=content)
         query(
-            f"INSERT INTO email (toUsername, fromUsername, content) VALUES ('{toUsername}', '{fromUsername}', '{content}')"
+            f"INSERT INTO email (toUsername, fromUsername, topic content) VALUES ('{toUsername}', '{fromUsername}', '{topic}', '{content}')"
         )
         return redirect(url_for("emailPage"))
 
@@ -179,11 +192,10 @@ def carSearchPage():
             cars = query(f"SELECT * FROM car")
         else:
             cars = query(f"SELECT * FROM car WHERE carName LIKE '%{text}%'")
-        return render_template("tables/carTable.html", cars=cars), 200
+        return render_template("tables/carTable.html", cars=cars)
 
     # GET
     return render_template("carSearch.html")
-
 
 @app.route("/userList", methods=["GET"])
 def userListPage():
@@ -200,12 +212,12 @@ def apiMessageCount():
     numberOfMsgs = querySingle(
         f"SELECT COUNT(*) FROM email WHERE toUsername = '{session['login']['username']}'"
     )[0]
-    return str(numberOfMsgs), 200
+    return str(numberOfMsgs)
 
 
 @app.route("/api/isLoggedIn")
 def apiLoggedIn():
-    return str(isLoggedin()), 200
+    return str(isLoggedin())
 
 
 def query(sql):

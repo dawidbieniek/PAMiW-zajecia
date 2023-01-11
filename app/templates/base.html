@@ -24,7 +24,7 @@
             </li>
             #if session.get('login', None) == None
             <li class="end-item">
-                <a href="{{url_for('loginPage')}}">Logowanie</a>
+                <a href="{{url_for('loginPage', next=url_for(request.endpoint))}}">Logowanie</a>
             </li>
             #else
             <li class="end-item">
