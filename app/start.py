@@ -1,9 +1,9 @@
-from flask import Flask, request, render_template, url_for, redirect, session, abort
+from flask import Flask, request, render_template, url_for, redirect, session, abort, send_from_directory
 from bcrypt import checkpw, gensalt, hashpw
 from contextlib import closing
 from functools import wraps
 from dotenv import load_dotenv
-from os import getenv
+from os import getenv, path
 from requests import Request, post, get
 from string import ascii_letters, digits
 from qrcode import QRCode
@@ -34,6 +34,8 @@ JWT_KEY = getenv("JWT_KEY")
 app = Flask(__name__)
 
 app.jinja_env.line_statement_prefix = "#"
+
+app.config["UPLOAD_FOLDER"] = "/tmp/"
 
 app.config["SESSION_PERMANENT"] = False
 app.config["SECRET_KEY"] = secrets.token_urlsafe(16)
@@ -107,6 +109,7 @@ def registerPage():
     # POST
     if request.method == "POST":
         username = request.form.get("username")
+        email = request.form.get("email")
         password = request.form.get("password")
         repPassword = request.form.get("repPassword")
 
@@ -129,7 +132,7 @@ def registerPage():
         # Register user
         hashed = hashpw(password.encode("utf-8"), gensalt())
         query(
-            f"INSERT INTO user VALUES ('{username}', '{hashed.decode('utf-8')}', 0, 'dawid_b01@wp.pl')"
+            f"INSERT INTO user VALUES ('{username}', '{hashed.decode('utf-8')}', 0, '{email}')"
         )
         return redirect(url_for("loginPage"))
 
@@ -139,7 +142,6 @@ def registerPage():
 @app.route("/login/changePassword", methods=["GET", "POST"])
 @requireLogin
 def changePasswordPage():
-
     # POST
     if request.method == "POST":
         password = request.form.get("password")
@@ -229,10 +231,10 @@ def changeResetPasswordPage(token):
 
     # GET
     if(token == None):
-        redirect(url_for("indexPage"))
+        return redirect(url_for("indexPage"))
     
     if(checkToken(token) == None):
-        redirect(url_for("indexPage"))
+        return redirect(url_for("indexPage"))
 
     return render_template("changeResetPassword.html", token=token)
 
@@ -246,14 +248,24 @@ def checkEmailPage():
     return render_template("checkEmail.html", email=email)
 
 
-@app.route("/account", methods=["GET"])
+@app.route("/account", methods=["GET", "POST"])
 @requireLogin
 def accountPage():
-
+    # POST
+    if request.method == "POST":
+        file = request.files.get("file", None)
+        file.save(path.join(app.config["UPLOAD_FOLDER"], session["login"]["username"] + ".png"))
+        log(file)
+    # GET
     user = session.get("login", None)
     if user:
         return render_template("account.html", user=user)
     return redirect(url_for("loginPage"))
+
+@app.route("/account/upload/", methods=["GET"])
+@requireLogin
+def uploadPage():
+    return send_from_directory(app.config["UPLOAD_FOLDER"], session["login"]["username"] + ".png")
 
 @app.route("/account/messages", methods=["GET"])
 @requireLogin
@@ -480,6 +492,6 @@ def checkToken(token):
     try:
         username = jwt.decode(token, JWT_KEY, algorithms=['HS256'])['reset_password']
     except:
-        return
+        return None
     return querySingle(f"SELECT * FROM user WHERE username = '{username}'")
     
