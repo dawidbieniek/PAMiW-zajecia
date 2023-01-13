@@ -2,13 +2,30 @@ from flask import Flask, request, render_template, url_for, redirect, session, a
 from bcrypt import checkpw, gensalt, hashpw
 from contextlib import closing
 from functools import wraps
+from dotenv import load_dotenv
+from os import getenv
+from requests import Request, post, get
+from string import ascii_letters, digits
+from datetime import datetime
+from qrcode import QRCode
+import random
 import secrets
 import sqlite3
 import sys
+import json
+import uuid
+
+from PIL import Image
+import base64
+import io
 
 from User import User
 
+load_dotenv(verbose=True)
+
 DB_PATH = "../db/database.db"
+GH_CLIENT_ID = getenv("CLIENT_ID")
+GH_CLIENT_SECRET = getenv("CLIENT_SECRET")
 
 app = Flask(__name__)
 
@@ -26,11 +43,9 @@ def requireLogin(func):
         return func(*args, **kwargs)
     return secure_function
 
-
 @app.route("/")
 def indexPage():
     return render_template("index.html", user=session.get("login", None))
-
 
 @app.route("/logout")
 def logout():
@@ -70,7 +85,6 @@ def loginPage():
     # GET
     log(request.args)
     return render_template("login.html", next=request.args.get("next", ""))
-
 
 @app.route("/login/register", methods=["GET", "POST"])
 def registerPage():
@@ -143,7 +157,6 @@ def changePasswordPage():
     # GET
     return render_template("changePassword.html")
 
-
 @app.route("/account", methods=["GET"])
 @requireLogin
 def accountPage():
@@ -153,12 +166,14 @@ def accountPage():
         return render_template("account.html", user=user)
     return redirect(url_for("loginPage"))
 
-
 @app.route("/account/messages")
 @requireLogin
 def emailPage():
-
-    return render_template("emails.html")
+    emails = query(
+        f"SELECT * FROM email WHERE toUsername = '{session['login']['username']}'"
+    )
+    log(emails)
+    return render_template("emails.html", emails=emails)
 
 @app.route("/account/messages/newMessage", methods=["GET", "POST"])
 @requireLogin
@@ -167,7 +182,7 @@ def newEmailPage():
     if request.method == "POST":
         fromUsername = session["login"]["username"]
         toUsername = request.form.get("to")
-        topis = request.form.get("topic")
+        topic = request.form.get("topic")
         content = request.form.get("content")
 
         if (
@@ -176,12 +191,30 @@ def newEmailPage():
         ):
             return render_template("newEmail.html", msg="Podany adresat nie istnieje", toUsername=toUsername, content=content)
         query(
-            f"INSERT INTO email (toUsername, fromUsername, topic content) VALUES ('{toUsername}', '{fromUsername}', '{topic}', '{content}')"
+            f"INSERT INTO email (toUsername, fromUsername, topic, content) VALUES ('{toUsername}', '{fromUsername}', '{topic}', '{content}')"
         )
         return redirect(url_for("emailPage"))
 
     return render_template("newEmail.html")
 
+@app.route("/account/messages/emails/<id>", methods=["GET"])
+@requireLogin
+def readEmailPage(id):
+    email = querySingle(f"SELECT * FROM email WHERE id = '{id}'")
+    if(email == None or email[1] != session["login"]["username"]):
+        return redirect(url_for("emailPage"))
+
+    return render_template("readEmail.html", email=email)
+
+@app.route("/account/messages/emails/delete/<id>")
+@requireLogin
+def deleteEmail(id):
+    email = querySingle(f"SELECT * FROM email WHERE id = '{id}'")
+    if(email == None or email[1] != session["login"]["username"]):
+        return redirect(url_for("emailPage"))
+
+    query(f"DELETE FROM email WHERE id = '{email[0]}'")
+    return redirect(url_for("emailPage"))
 
 @app.route("/carSearch", methods=["GET", "POST"])
 def carSearchPage():
@@ -197,13 +230,43 @@ def carSearchPage():
     # GET
     return render_template("carSearch.html")
 
+@app.route("/cars/info/<id>", methods=["GET"])
+@requireLogin
+def carInfoPage(id):
+    car = querySingle(f"SELECT * FROM car WHERE id = '{id}'")
+
+    return render_template("carInfo.html", car=car)
+
+@app.route("/cars/reserve/<id>", methods=["GET"])
+@requireLogin
+def carReservePage(id):
+    car = querySingle(f"SELECT * FROM car WHERE id = '{id}'")
+    username = session["login"]["username"]
+    now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+    id = uuid.uuid4().hex
+    log(id)
+
+    query(f"INSERT INTO reservation VALUES ('{id}', '{now}', '{username}', '{car[0]}')")
+    res = querySingle(f"SELECT * FROM reservation WHERE id = '{id}'")
+
+    qr = QRCode(version=1, box_size=10, border=1)
+    qr.add_data(id)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill="black", back_color="white")
+
+    imgData = io.BytesIO()
+    img.save(imgData, "png")
+    encodedImg=base64.b64encode(imgData.getvalue())
+
+    return render_template("carReserve.html", car=car, res=res, img=encodedImg.decode("utf-8"))
+
 @app.route("/userList", methods=["GET"])
 def userListPage():
     if not isCurrentUserAdmin():
         return abort(403)
     users = query("SELECT * FROM user")
     return render_template("userList.html", users=users)
-
 
 @app.route("/api/messageCount")
 def apiMessageCount():
@@ -214,24 +277,87 @@ def apiMessageCount():
     )[0]
     return str(numberOfMsgs)
 
-
 @app.route("/api/isLoggedIn")
 def apiLoggedIn():
     return str(isLoggedin())
 
+@app.route("/github/callback")
+def ghCallback():
+    if(request.args.get("state") != request.cookies.get("state")):
+        return "Nieprawidłowy stan uwierzytelniania.<a href='"+url_for("loginPage")+"'>Spróbuj ponownie</a>"
+
+    params = {
+    "client_id": GH_CLIENT_ID,
+    "client_secret": GH_CLIENT_SECRET,
+    "code": request.args.get("code")
+    }
+    headers = {
+        "Accept" : "application/json"
+    }
+
+    tokenResponse = post("https://github.com/login/oauth/access_token", headers=headers, params=params)
+    token = json.loads(tokenResponse.text).get("access_token")
+
+    auth = "Bearer " + token
+
+    headers = {
+        "Accept" : "application/json",
+        "Authorization":auth
+    }
+
+    userResponse = get("https://api.github.com/user", headers=headers)
+    username = json.loads(userResponse.text).get("login")
+
+    # Jeśli użytkownik GH ma taki sam login jak jakiś użytkownik strony, to będzie problem lol
+    userData = querySingle(f"SELECT * FROM user WHERE username = '{username}'")
+    log(userData)
+    if(userData == None or username != userData[0]):
+        psswd = genState()
+        hashed = hashpw(psswd.encode("utf-8"), gensalt())
+        query(
+            f"INSERT INTO user VALUES ('{username}', '{hashed.decode('utf-8')}', 0)"
+        )
+        session["login"] = User(username, psswd).__dict__
+
+    userData = querySingle(f"SELECT * FROM user WHERE username = '{username}'")
+    session["login"] = User(username, userData[2]).__dict__
+
+
+    return redirect(url_for("indexPage"))
+
+@app.route("/github/auth")
+def ghAuth():
+    state = genState()
+    
+    params = {
+    "client_id" : GH_CLIENT_ID,
+    "redirect_uri": "http://127.0.0.1:5050/github/callback",
+    "scope": "repo user",
+    "state": state        
+    }
+
+    request = Request("GET", "https://github.com/login/oauth/authorize", params=params).prepare()
+
+    response = redirect(request.url)
+    response.set_cookie("state", state)
+
+    return response
+
+def genState(l = 30):
+  char = ascii_letters + digits
+  rand = random.SystemRandom()
+  return ''.join(rand.choice(char) for _ in range(l))
 
 def query(sql):
     with closing(sqlite3.connect(DB_PATH)) as con, con, closing(con.cursor()) as cur:
         cur.execute(sql)
         return cur.fetchall()
 
-
 def querySingle(sql):
     with closing(sqlite3.connect(DB_PATH)) as con, con, closing(con.cursor()) as cur:
         cur.execute(sql)
 
         return cur.fetchone()
-
 
 def checkPassword(username, password):
     userData = querySingle(f"SELECT * FROM user WHERE username = '{username}'")
@@ -241,10 +367,8 @@ def checkPassword(username, password):
     dbHash = userData[1].encode("utf-8")
     return checkpw(encodedPassword, dbHash)
 
-
 def isLoggedin():
     return session.get("login", None) != None
-
 
 def isCurrentUserAdmin():
     if not isLoggedin():
@@ -255,7 +379,6 @@ def isCurrentUserAdmin():
             f"SELECT isadmin FROM user WHERE username = '{session['login']['username']}'"
         )
     )[0] == 1
-
 
 def log(msg):
     print(msg, file=sys.stderr)

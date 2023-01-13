@@ -2,7 +2,6 @@
 {%block title%}Konto {{user.username}}{%endblock%}
 
 {%block contents%}
-<p><a href="{{url_for('indexPage')}}">Powrót</a></p>
 <h1>Konto</h1>
 <p>Login: {{user.username}}</p>
 <p>Typ konta: {{'admin' if user.isadmin else 'zwykłe'}}</p>

@@ -21,5 +21,6 @@ if __name__ == "__main__":
     printTable("user")
     printTable("car")
     printTable("email")
+    printTable("reservation")
 
     db.close()

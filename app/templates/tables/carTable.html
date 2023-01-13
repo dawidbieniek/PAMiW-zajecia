@@ -8,13 +8,14 @@
         </tr>
     </thead>
     <tbody>
-        {% for row in cars %}
-        <tr>
+        #for row in cars 
+        #set url = url_for("carInfoPage", id=row[0])
+        <tr onclick="window.location='{{url}}'">
             <td>{{row[0]}}</td>
             <td>{{row[1]}}</td>
             <td>{{row[2]}}</td>
             <td>{{row[3]}}</td>
         </tr>
-        {% endfor %}
+        #endfor
     </tbody>
 </table>

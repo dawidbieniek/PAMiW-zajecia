@@ -3,9 +3,47 @@
 Wiadomości
 #endblock
 
+#block head
+<script>
+    function btnClick(e) {
+        e = e || window.event;
+        e.stopPropagation();
+        window.location = "/account/messages/emails/delete/" + e.srcElement.id.substring(6);
+    }
+</script>
+#endblock
+
+
 #block contents
 <form action="{{url_for('newEmailPage')}}", method="GET">
     <button type="submit">Nowa wiadomość</button>
 </form>
+<br/>
+
+#if emails is defined and emails|length > 0
+<div class="search-table" style="width:80%">
+    <table>
+        <thead>
+            <th>Od</th>
+            <th>Temat wiadomości</th>
+            <th>Usuwanie</th>
+        </thead>
+        <tbody>
+            #for row in emails
+            #set url = url_for("readEmailPage", id=row[0])
+            #set url2 = url_for("deleteEmail", id=row[0])
+            <tr onclick="window.location='{{url}}'">
+                <td style="width:10em">{{row[2]}}</td>
+                <td>{{row[3]}}</td>
+                <td style="width:20px"><button id="delete{{row[0]}}" onclick="btnClick(event)" style="background-color:red; height:1.5em; width:1.5em; z-index:1">X</button></td>
+            </tr>
+            #endfor
+        </tbody>
+    </table>
+</div>
+    
+#else
+    <p>Brak wiadomości</p>
+#endif
 
 #endblock

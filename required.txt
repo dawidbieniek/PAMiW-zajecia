@@ -1,2 +1,6 @@
 flask
 bcrypt
+python-dotenv
+requests
+pillow
+qrcode
