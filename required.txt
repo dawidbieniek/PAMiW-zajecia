@@ -4,3 +4,5 @@ python-dotenv
 requests
 pillow
 qrcode
+flask-mail
+pyjwt

@@ -6,18 +6,19 @@ from dotenv import load_dotenv
 from os import getenv
 from requests import Request, post, get
 from string import ascii_letters, digits
-from datetime import datetime
 from qrcode import QRCode
+from flask_mail import Mail, Message
+from datetime import datetime
+from datetime import timedelta
 import random
 import secrets
 import sqlite3
 import sys
 import json
 import uuid
-
-from PIL import Image
 import base64
 import io
+import jwt
 
 from User import User
 
@@ -26,6 +27,9 @@ load_dotenv(verbose=True)
 DB_PATH = "../db/database.db"
 GH_CLIENT_ID = getenv("CLIENT_ID")
 GH_CLIENT_SECRET = getenv("CLIENT_SECRET")
+GM_USERNAME = getenv("GM_USERNAME")
+GM_PASSWORD = getenv("GM_PASSWORD")
+JWT_KEY = getenv("JWT_KEY")
 
 app = Flask(__name__)
 
@@ -33,6 +37,13 @@ app.jinja_env.line_statement_prefix = "#"
 
 app.config["SESSION_PERMANENT"] = False
 app.config["SECRET_KEY"] = secrets.token_urlsafe(16)
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USERNAME'] = GM_USERNAME
+app.config['MAIL_PASSWORD'] = GM_PASSWORD
+
+mail = Mail(app)
 
 def requireLogin(func):
     @wraps(func)
@@ -47,7 +58,7 @@ def requireLogin(func):
 def indexPage():
     return render_template("index.html", user=session.get("login", None))
 
-@app.route("/logout")
+@app.route("/logout", methods=["GET"])
 def logout():
     if(session.get("login", None) != None):
         # session.pop("login", None)
@@ -83,8 +94,11 @@ def loginPage():
             "login.html", msg="Niepoprawne dane logowania", username=username
         )
     # GET
-    log(request.args)
-    return render_template("login.html", next=request.args.get("next", ""))
+    msg = request.args.get("msg", None)
+    if msg != None:
+        return render_template("login.html", msg=msg)
+    else:
+        return render_template("login.html", next=request.args.get("next", ""))
 
 @app.route("/login/register", methods=["GET", "POST"])
 def registerPage():
@@ -115,7 +129,7 @@ def registerPage():
         # Register user
         hashed = hashpw(password.encode("utf-8"), gensalt())
         query(
-            f"INSERT INTO user VALUES ('{username}', '{hashed.decode('utf-8')}', FALSE)"
+            f"INSERT INTO user VALUES ('{username}', '{hashed.decode('utf-8')}', 0, 'dawid_b01@wp.pl')"
         )
         return redirect(url_for("loginPage"))
 
@@ -157,6 +171,81 @@ def changePasswordPage():
     # GET
     return render_template("changePassword.html")
 
+@app.route("/login/resetPassword", methods=["GET", "POST"])
+def resetPasswordPage():
+    # POST
+    if(request.method == "POST"):
+        email = request.form.get("email", None)
+
+        if(email == None):
+            return redirect(url_for("loginPage", msg="Niepoprawny adres"))
+
+        username = querySingle(f"SELECT * FROM user WHERE email = '{email}'")[0]
+
+        if(username == None):
+            return redirect(url_for("loginPage", msg="Niepoprawny adres"))
+
+        token = getResetToken(username)
+
+        if(token == None):
+            return redirect(url_for("loginPage", msg="Niepoprawny adres"))
+        
+        msg = Message()
+        msg.subject = "Reset hasła dla " + username
+        msg.recipients = [email]
+        msg.sender = GM_USERNAME
+        msg.body = render_template("emailResetBody.txt", user=username, token=token)
+        msg.html = render_template("emailResetBody.html", user=username, token=token)
+    
+        mail.send(msg)
+
+        response = redirect(url_for("checkEmailPage"))
+        response.set_cookie("email", email)
+        return response
+    
+    # GET
+    return render_template("resetPassword.html")
+    
+@app.route("/login/resetPassword/change/<token>", methods=["GET", "POST"])
+def changeResetPasswordPage(token):
+    # POST
+    if request.method == "POST":
+        password = request.form.get("password")
+        repPassword = request.form.get("repPassword")
+        token = request.form.get("token")
+
+        if password == "" or repPassword == "":
+            return render_template("changeResetPassword.html", token=token, msg="Podaj wszystkie dane")
+        # Check if passwords match
+        if password != repPassword:
+            return render_template("changeResetPassword.html", token=token, msg="Hasła muszą być identyczne")
+
+        username = checkToken(token)[0]
+
+        hashed = hashpw(password.encode("utf-8"), gensalt())
+        query(f"UPDATE user SET password = '{hashed.decode('utf-8')}' WHERE username = '{username}'")
+
+        return redirect(url_for("loginPage"))
+
+    # GET
+    if(token == None):
+        redirect(url_for("indexPage"))
+    
+    if(checkToken(token) == None):
+        redirect(url_for("indexPage"))
+
+    return render_template("changeResetPassword.html", token=token)
+
+@app.route("/login/resetPassword/checkEmail", methods=["GET"])
+def checkEmailPage():
+    email = request.cookies.get("email", None)
+    log(email)
+    if email == None:
+        return redirect(url_for("indexPage"))
+
+    return render_template("checkEmail.html", email=email)
+
+
 @app.route("/account", methods=["GET"])
 @requireLogin
 def accountPage():
@@ -166,7 +255,7 @@ def accountPage():
         return render_template("account.html", user=user)
     return redirect(url_for("loginPage"))
 
-@app.route("/account/messages")
+@app.route("/account/messages", methods=["GET"])
 @requireLogin
 def emailPage():
     emails = query(
@@ -206,7 +295,7 @@ def readEmailPage(id):
 
     return render_template("readEmail.html", email=email)
 
-@app.route("/account/messages/emails/delete/<id>")
+@app.route("/account/messages/emails/delete/<id>", methods=["GET"])
 @requireLogin
 def deleteEmail(id):
     email = querySingle(f"SELECT * FROM email WHERE id = '{id}'")
@@ -315,7 +404,7 @@ def ghCallback():
         psswd = genState()
         hashed = hashpw(psswd.encode("utf-8"), gensalt())
         query(
-            f"INSERT INTO user VALUES ('{username}', '{hashed.decode('utf-8')}', 0)"
+            f"INSERT INTO user VALUES ('{username}', '{hashed.decode('utf-8')}', 0, 'dawid_b01@wp.pl')"
         )
         session["login"] = User(username, psswd).__dict__
 
@@ -382,3 +471,15 @@ def isCurrentUserAdmin():
 
 def log(msg):
     print(msg, file=sys.stderr)
+
+def getResetToken(username):
+    payload = {'reset_password': username, 'exp': datetime.now() + timedelta(seconds=600)}
+    return jwt.encode(payload, JWT_KEY, algorithm='HS256')
+
+def checkToken(token):
+    try:
+        username = jwt.decode(token, JWT_KEY, algorithms=['HS256'])['reset_password']
+    except:
+        return
+    return querySingle(f"SELECT * FROM user WHERE username = '{username}'")
+    

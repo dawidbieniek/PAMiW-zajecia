@@ -7,7 +7,8 @@ CREATE TABLE user
 (
     username TEXT(32) PRIMARY KEY,
     password TEXT(128) NOT NULL,
-    isadmin INTEGER
+    isadmin INTEGER,
+    email TEXT(64)
 );
 
 CREATE TABLE car
