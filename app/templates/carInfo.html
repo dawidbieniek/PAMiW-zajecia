@@ -1,0 +1,13 @@
+#extends "base.html"
+#block title
+Pojazd {{car[1]}}
+#endblock
+
+#block contents
+<p>Nazwa: {{car[1]}}</p>
+<p>Kolor: {{car[2]}}</p>
+<p>Cena wynajmu: {{car[3]}} zł</p>
+<form action="{{url_for('carReservePage', id=car[0])}}">
+    <button type="submit">Rezerwuj</button>
+</form>
+#endblock

@@ -1,0 +1,25 @@
+#extends "baseBare.html"
+
+#block head
+<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+#endblock
+
+#block body
+
+<body>
+    #block formHeader
+    #endblock
+    #block header
+    #endblock
+    #block elements
+    #endblock
+    #if msg is defined
+    <div class="form-group">
+        <span class="error-message">{{msg}}</span>
+    </div>
+    #endif
+    #block afterMsg
+    #endblock
+    </form>
+</body>
+#endblock

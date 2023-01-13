@@ -1,0 +1,3 @@
+Użytkownik o nazwie: {{ user }} zarządał resetu hasła.
+Po kliknięciu w poniższy link nastąpi przekierowanie do formularza resetu hasła.
+{{url_for('changeResetPasswordPage', token=token, _external=True)}}
