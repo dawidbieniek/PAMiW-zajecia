@@ -20,7 +20,8 @@ if __name__ == "__main__":
     print("Tables content:")
     printTable("user")
     printTable("car")
-    printTable("email")
+    printTable("message")
     printTable("reservation")
+    printTable("blackTokens")
 
     db.close()

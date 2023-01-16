@@ -1,35 +1,32 @@
-from flask import Flask, request, render_template, url_for, redirect, session, abort, send_from_directory
-from bcrypt import checkpw, gensalt, hashpw
-from contextlib import closing
-from functools import wraps
+from flask import (
+    Flask,
+    request,
+    render_template,
+    url_for,
+    redirect,
+    session,
+    send_from_directory,
+)
+
 from dotenv import load_dotenv
-from os import getenv, path
-from requests import Request, post, get
-from string import ascii_letters, digits
-from qrcode import QRCode
-from flask_mail import Mail, Message
+from os import path
+
 from datetime import datetime
-from datetime import timedelta
-import random
 import secrets
-import sqlite3
-import sys
-import json
-import uuid
-import base64
-import io
-import jwt
+import functools
 
-from User import User
+from User import User, isLoginTaken, isEmailTaken, getAllUsers
+import mydb
+from debug import log
+import security
+import myemail
+import message
+import cars
+import reservations
+import auth
 
-load_dotenv(verbose=True)
+load_dotenv()
 
-DB_PATH = "../db/database.db"
-GH_CLIENT_ID = getenv("CLIENT_ID")
-GH_CLIENT_SECRET = getenv("CLIENT_SECRET")
-GM_USERNAME = getenv("GM_USERNAME")
-GM_PASSWORD = getenv("GM_PASSWORD")
-JWT_KEY = getenv("JWT_KEY")
 
 app = Flask(__name__)
 
@@ -39,56 +36,75 @@ app.config["UPLOAD_FOLDER"] = "/tmp/"
 
 app.config["SESSION_PERMANENT"] = False
 app.config["SECRET_KEY"] = secrets.token_urlsafe(16)
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 465
-app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_USERNAME'] = GM_USERNAME
-app.config['MAIL_PASSWORD'] = GM_PASSWORD
 
-mail = Mail(app)
+security.init()
+auth.init()
+myemail.init(app)
+
 
 def requireLogin(func):
-    @wraps(func)
-    def secure_function(*args, **kwargs):
+    @functools.wraps(func)
+    def secureFunction(*args, **kwargs):
         if not isLoggedin():
-            log("Redirect")
             return redirect(url_for("loginPage", next=request.url))
         return func(*args, **kwargs)
-    return secure_function
+
+    return secureFunction
+
+def requireAdmin(func):
+    @functools.wraps(func)
+    def internal(*args, **kwargs):
+        if not isCurrentUserAdmin():
+            return "Brak uprawnień <br> <a href='" + url_for("indexPage") + "'>Strona główna</a>"
+        return func(*args, **kwargs)
+
+    return internal
+
+def prohibitLogged(func):
+    @functools.wraps(func)
+    def internal(*args, **kwargs):
+        if isLoggedin():
+            return redirect(url_for("indexPage"))
+        return func(*args, **kwargs)
+
+    return internal
+
 
 @app.route("/")
 def indexPage():
-    return render_template("index.html", user=session.get("login", None))
+    return render_template("index.html")
+
 
 @app.route("/logout", methods=["GET"])
 def logout():
-    if(session.get("login", None) != None):
-        # session.pop("login", None)
+    if session.get("login", None) != None:
         session.clear()
     return redirect(url_for("indexPage"))
 
+
 @app.route("/login", methods=["GET", "POST"])
+@prohibitLogged
 def loginPage():
-    if isLoggedin():
-        return redirect(url_for("indexPage"))
     # POST
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-        nextUrl = request.form.get("next")
+        nextUrl = request.form.get("next", None)
 
-        if username == "" or password == "":
+        # Check if form had all fields
+        if not username or not password:
             return render_template(
                 "login.html",
                 msg="Podaj login i hasło",
                 username=(username if username else None),
             )
 
-        userData = querySingle(f"SELECT * FROM user WHERE username = '{username}'")
-        if userData and checkPassword(username, password):
-            session["login"] = User(userData[0], userData[2]).__dict__
-            log(nextUrl)
-            if(nextUrl):
+        # user = User(username)
+        if User(username).checkPassword(password):
+            # Save user to session
+            session["login"] = username
+            # Redirect
+            if nextUrl:
                 return redirect(nextUrl)
             return redirect(url_for("indexPage"))
 
@@ -97,15 +113,15 @@ def loginPage():
         )
     # GET
     msg = request.args.get("msg", None)
-    if msg != None:
+    if msg:
         return render_template("login.html", msg=msg)
     else:
         return render_template("login.html", next=request.args.get("next", ""))
 
+
 @app.route("/login/register", methods=["GET", "POST"])
+@prohibitLogged
 def registerPage():
-    if isLoggedin():
-        return redirect(url_for("indexPage"))
     # POST
     if request.method == "POST":
         username = request.form.get("username")
@@ -113,31 +129,36 @@ def registerPage():
         password = request.form.get("password")
         repPassword = request.form.get("repPassword")
 
-        if username == "" or password == "" or repPassword == "":
+        # Check if form had all fields
+        if not username or not email or not password or not repPassword:
             return render_template(
                 "register.html",
                 msg="Podaj wszystkie dane",
                 username=(username if username else None),
+                email=(email if email else None),
             )
         # Check if passwords match
         if password != repPassword:
             return render_template(
-                "register.html", msg="Hasła muszą być identyczne", username=username
+                "register.html", msg="Hasła muszą być identyczne", username=username, email=email
             )
         # Check if login already exists
-        if len(query(f"SELECT username FROM user WHERE username = '{username}'")) > 0:
+        if isLoginTaken(username):
             return render_template(
-                "register.html", msg="Login już jest zajęty", username=username
+                "register.html", msg="Login już jest zajęty", username=username, email=email
+            )
+        # Check if email already exists
+        if isEmailTaken(username):
+            return render_template(
+                "register.html", msg="Email już jest zajęty", username=username, email=email
             )
         # Register user
-        hashed = hashpw(password.encode("utf-8"), gensalt())
-        query(
-            f"INSERT INTO user VALUES ('{username}', '{hashed.decode('utf-8')}', 0, '{email}')"
-        )
+        User(username).register(email, password)
         return redirect(url_for("loginPage"))
 
     # GET
     return render_template("register.html")
+
 
 @app.route("/login/changePassword", methods=["GET", "POST"])
 @requireLogin
@@ -148,66 +169,72 @@ def changePasswordPage():
         newPassword = request.form.get("newPassword")
         repNewPassword = request.form.get("repNewPassword")
 
-        if password == "" or newPassword == "" or repNewPassword == "":
+        # Check if form had all fields
+        if not password or not newPassword or not repNewPassword:
             return render_template("changePassword.html", msg="Podaj wszystkie dane")
         # Check if passwords match
         if newPassword != repNewPassword:
             return render_template(
                 "changePassword.html", msg="Nowe hasła muszą być identyczne"
             )
-        # Check if new password is new
+        # Check if new password is different than current one
         if newPassword == password:
             return render_template(
                 "changePassword.html", msg="Nowe hasło musi różnić się od starego"
             )
         # Check if old password is correct
-        username = session["login"]["username"]
-        if not checkPassword(username, password):
+        user = User(session["login"])
+        if not user.checkPassword(password):
             return render_template("changePassword.html", msg="Niepoprawne hasło")
         # Update password
-        hashed = hashpw(newPassword.encode("utf-8"), gensalt())
-        query(
-            f"UPDATE user SET password = '{hashed.decode('utf-8')}' WHERE username = '{username}'"
-        )
+        user.changePassword(password)
         return redirect(url_for("loginPage"))
     # GET
     return render_template("changePassword.html")
 
+
 @app.route("/login/resetPassword", methods=["GET", "POST"])
 def resetPasswordPage():
     # POST
-    if(request.method == "POST"):
+    if request.method == "POST":
         email = request.form.get("email", None)
 
-        if(email == None):
+        # Check if form had all fields
+        if not email:
+            return redirect(url_for("loginPage", msg="Niepoprawny adres email"))
+
+        # Check if email in connected to registered user
+        user = User.fromEmail(email)
+        if not user:
             return redirect(url_for("loginPage", msg="Niepoprawny adres"))
 
-        username = querySingle(f"SELECT * FROM user WHERE email = '{email}'")[0]
-
-        if(username == None):
+        # Create token
+        token = security.getResetToken(user)
+        if not token:
             return redirect(url_for("loginPage", msg="Niepoprawny adres"))
 
-        token = getResetToken(username)
-
-        if(token == None):
-            return redirect(url_for("loginPage", msg="Niepoprawny adres"))
-        
-        msg = Message()
-        msg.subject = "Reset hasła dla " + username
-        msg.recipients = [email]
-        msg.sender = GM_USERNAME
-        msg.body = render_template("emailResetBody.txt", user=username, token=token)
-        msg.html = render_template("emailResetBody.html", user=username, token=token)
-    
-        mail.send(msg)
-
-        response = redirect(url_for("checkEmailPage"))
+        # Send email
+        username = user.getUsername()
+        myemail.sendEmail(
+            "Reset hasła dla " + username,
+            email,
+            render_template("emailResetBody.txt", user=username, token=token),
+            render_template("emailResetBody.html", user=username, token=token),
+        )
+        # TODO zmienić z ciasteczek na parametry URL
+        response = redirect(
+            url_for(
+                "checkEmailPage",
+            )
+        )
         response.set_cookie("email", email)
         return response
-    
+
     # GET
     return render_template("resetPassword.html")
-    
+
+
+# TODO sprawdzić czy przesyłanie tokena w GET ma sens
 @app.route("/login/resetPassword/change/<token>", methods=["GET", "POST"])
 def changeResetPasswordPage(token):
     # POST
@@ -216,33 +243,41 @@ def changeResetPasswordPage(token):
         repPassword = request.form.get("repPassword")
         token = request.form.get("token")
 
-        if password == "" or repPassword == "":
-            return render_template("changeResetPassword.html", token=token, msg="Podaj wszystkie dane")
+        # Check if form had all fields
+        if not password or not repPassword:
+            return render_template(
+                "changeResetPassword.html", token=token, msg="Podaj wszystkie dane"
+            )
         # Check if passwords match
         if password != repPassword:
-            return render_template("changeResetPassword.html", token=token, msg="Hasła muszą być identyczne")
+            return render_template(
+                "changeResetPassword.html",
+                token=token,
+                msg="Hasła muszą być identyczne",
+            )
 
-        username = checkToken(token)[0]
-
-        hashed = hashpw(password.encode("utf-8"), gensalt())
-        query(f"UPDATE user SET password = '{hashed.decode('utf-8')}' WHERE username = '{username}'")
+        # Change password
+        user = security.checkToken(token)
+        if user:
+            user.changePassword(password)
+            security.blacklistToken(token)
+        else:
+            return redirect(url_for("indexPage"))
 
         return redirect(url_for("loginPage"))
 
     # GET
-    if(token == None):
-        return redirect(url_for("indexPage"))
-    
-    if(checkToken(token) == None):
+    if not token or not security.checkToken(token):
         return redirect(url_for("indexPage"))
 
     return render_template("changeResetPassword.html", token=token)
 
+
 @app.route("/login/resetPassword/checkEmail", methods=["GET"])
 def checkEmailPage():
     email = request.cookies.get("email", None)
-    log(email)
-    if email == None:
+
+    if not email:
         return redirect(url_for("indexPage"))
 
     return render_template("checkEmail.html", email=email)
@@ -254,7 +289,7 @@ def accountPage():
     # POST
     if request.method == "POST":
         file = request.files.get("file", None)
-        file.save(path.join(app.config["UPLOAD_FOLDER"], session["login"]["username"] + ".png"))
+        file.save(path.join(app.config["UPLOAD_FOLDER"], session["login"] + ".png"))
         log(file)
     # GET
     user = session.get("login", None)
@@ -262,236 +297,162 @@ def accountPage():
         return render_template("account.html", user=user)
     return redirect(url_for("loginPage"))
 
+
 @app.route("/account/upload/", methods=["GET"])
 @requireLogin
 def uploadPage():
-    return send_from_directory(app.config["UPLOAD_FOLDER"], session["login"]["username"] + ".png")
+    return send_from_directory(app.config["UPLOAD_FOLDER"], session["login"] + ".png")
+
 
 @app.route("/account/messages", methods=["GET"])
 @requireLogin
 def emailPage():
-    emails = query(
-        f"SELECT * FROM email WHERE toUsername = '{session['login']['username']}'"
+    emails = mydb.query(
+        f"SELECT * FROM message WHERE toUsername = '{session['login']}'"
     )
     log(emails)
     return render_template("emails.html", emails=emails)
 
+
 @app.route("/account/messages/newMessage", methods=["GET", "POST"])
 @requireLogin
 def newEmailPage():
-
+    # POST
     if request.method == "POST":
-        fromUsername = session["login"]["username"]
         toUsername = request.form.get("to")
         topic = request.form.get("topic")
         content = request.form.get("content")
 
-        if (
-            len(query(f"SELECT username FROM user WHERE username = '{toUsername}'"))
-            == 0
-        ):
-            return render_template("newEmail.html", msg="Podany adresat nie istnieje", toUsername=toUsername, content=content)
-        query(
-            f"INSERT INTO email (toUsername, fromUsername, topic, content) VALUES ('{toUsername}', '{fromUsername}', '{topic}', '{content}')"
-        )
-        return redirect(url_for("emailPage"))
+        if not isLoginTaken(toUsername):
+            return render_template(
+                "newEmail.html",
+                msg="Podany adresat nie istnieje",
+                toUsername=toUsername,
+                content=content,
+            )
 
+        message.addMessage(session["login"], toUsername, topic, content)
+        return redirect(url_for("emailPage"))
+    # GET
     return render_template("newEmail.html")
+
 
 @app.route("/account/messages/emails/<id>", methods=["GET"])
 @requireLogin
 def readEmailPage(id):
-    email = querySingle(f"SELECT * FROM email WHERE id = '{id}'")
-    if(email == None or email[1] != session["login"]["username"]):
-        return redirect(url_for("emailPage"))
+    email = message.getMessage(session["login"], id)
+    if not email:
+        redirect(url_for("emailPage"))
 
-    return render_template("readEmail.html", email=email)
+    return render_template(
+        "readEmail.html",
+        fromName=email[0],
+        subject=email[1],
+        body=email[2],
+        id=email[3],
+    )
+
 
 @app.route("/account/messages/emails/delete/<id>", methods=["GET"])
 @requireLogin
 def deleteEmail(id):
-    email = querySingle(f"SELECT * FROM email WHERE id = '{id}'")
-    if(email == None or email[1] != session["login"]["username"]):
-        return redirect(url_for("emailPage"))
-
-    query(f"DELETE FROM email WHERE id = '{email[0]}'")
+    message.deleteMessage(session["login"], id)
     return redirect(url_for("emailPage"))
+
 
 @app.route("/carSearch", methods=["GET", "POST"])
 def carSearchPage():
     # POST
     if request.method == "POST":
         text = request.get_json().get("query")
-        if not text or text == "":
-            cars = query(f"SELECT * FROM car")
+        if text:
+            carsTable = cars.getCarsLike(text)
         else:
-            cars = query(f"SELECT * FROM car WHERE carName LIKE '%{text}%'")
-        return render_template("tables/carTable.html", cars=cars)
+            carsTable = cars.getAllCars()
+        return render_template("tables/carTable.html", cars=carsTable)
 
     # GET
     return render_template("carSearch.html")
 
+
 @app.route("/cars/info/<id>", methods=["GET"])
 @requireLogin
 def carInfoPage(id):
-    car = querySingle(f"SELECT * FROM car WHERE id = '{id}'")
+    car = cars.getCarInfo(id)
+
+    if not car:
+        return redirect(url_for('searchPage'))
 
     return render_template("carInfo.html", car=car)
 
 @app.route("/cars/reserve/<id>", methods=["GET"])
 @requireLogin
 def carReservePage(id):
-    car = querySingle(f"SELECT * FROM car WHERE id = '{id}'")
-    username = session["login"]["username"]
+    reservationId = reservations.createId()
+    username = session["login"]
     now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-    id = uuid.uuid4().hex
-    log(id)
+    car = cars.getCarInfo(id)
 
-    query(f"INSERT INTO reservation VALUES ('{id}', '{now}', '{username}', '{car[0]}')")
-    res = querySingle(f"SELECT * FROM reservation WHERE id = '{id}'")
+    if not car:
+        return redirect(url_for("searchPage"))
+    reservations.add(reservationId, now, username, car[0])
 
-    qr = QRCode(version=1, box_size=10, border=1)
-    qr.add_data(id)
-    qr.make(fit=True)
+    return render_template("carReserve.html", car=car, resId=reservationId, img=reservations.createQRImage(reservationId))
 
-    img = qr.make_image(fill="black", back_color="white")
-
-    imgData = io.BytesIO()
-    img.save(imgData, "png")
-    encodedImg=base64.b64encode(imgData.getvalue())
-
-    return render_template("carReserve.html", car=car, res=res, img=encodedImg.decode("utf-8"))
 
 @app.route("/userList", methods=["GET"])
+@requireAdmin
 def userListPage():
-    if not isCurrentUserAdmin():
-        return abort(403)
-    users = query("SELECT * FROM user")
-    return render_template("userList.html", users=users)
+    return render_template("userList.html", users=getAllUsers())
+
 
 @app.route("/api/messageCount")
+@requireLogin
 def apiMessageCount():
-    if not isLoggedin():
-        return 0
-    numberOfMsgs = querySingle(
-        f"SELECT COUNT(*) FROM email WHERE toUsername = '{session['login']['username']}'"
+    numberOfMsgs = mydb.querySingle(
+        f"SELECT COUNT(*) FROM message WHERE toUsername = '{session['login']}'"
     )[0]
     return str(numberOfMsgs)
+
 
 @app.route("/api/isLoggedIn")
 def apiLoggedIn():
     return str(isLoggedin())
+    
+@app.route("/api/isAdmin")
+def apiAdmin():
+    return str(isCurrentUserAdmin())
+
 
 @app.route("/github/callback")
 def ghCallback():
-    if(request.args.get("state") != request.cookies.get("state")):
-        return "Nieprawidłowy stan uwierzytelniania.<a href='"+url_for("loginPage")+"'>Spróbuj ponownie</a>"
-
-    params = {
-    "client_id": GH_CLIENT_ID,
-    "client_secret": GH_CLIENT_SECRET,
-    "code": request.args.get("code")
-    }
-    headers = {
-        "Accept" : "application/json"
-    }
-
-    tokenResponse = post("https://github.com/login/oauth/access_token", headers=headers, params=params)
-    token = json.loads(tokenResponse.text).get("access_token")
-
-    auth = "Bearer " + token
-
-    headers = {
-        "Accept" : "application/json",
-        "Authorization":auth
-    }
-
-    userResponse = get("https://api.github.com/user", headers=headers)
-    username = json.loads(userResponse.text).get("login")
+    if request.args.get("state") != request.cookies.get("state"):
+        return (
+            "Nieprawidłowy stan uwierzytelniania.<a href='"
+            + url_for("loginPage")
+            + "'>Spróbuj ponownie</a>"
+        )
+        
+    userData = auth.GHGetUserData(request)
 
     # Jeśli użytkownik GH ma taki sam login jak jakiś użytkownik strony, to będzie problem lol
-    userData = querySingle(f"SELECT * FROM user WHERE username = '{username}'")
-    log(userData)
-    if(userData == None or username != userData[0]):
-        psswd = genState()
-        hashed = hashpw(psswd.encode("utf-8"), gensalt())
-        query(
-            f"INSERT INTO user VALUES ('{username}', '{hashed.decode('utf-8')}', 0, 'dawid_b01@wp.pl')"
-        )
-        session["login"] = User(username, psswd).__dict__
-
-    userData = querySingle(f"SELECT * FROM user WHERE username = '{username}'")
-    session["login"] = User(username, userData[2]).__dict__
-
+    user = auth.GHRegisterNewUser(userData[0], userData[1])
+    session["login"] = user.getUsername()
 
     return redirect(url_for("indexPage"))
 
+
 @app.route("/github/auth")
-def ghAuth():
-    state = genState()
-    
-    params = {
-    "client_id" : GH_CLIENT_ID,
-    "redirect_uri": "http://127.0.0.1:5050/github/callback",
-    "scope": "repo user",
-    "state": state        
-    }
+def ghAuth():    
+    return auth.GHAuthResponse()
 
-    request = Request("GET", "https://github.com/login/oauth/authorize", params=params).prepare()
-
-    response = redirect(request.url)
-    response.set_cookie("state", state)
-
-    return response
-
-def genState(l = 30):
-  char = ascii_letters + digits
-  rand = random.SystemRandom()
-  return ''.join(rand.choice(char) for _ in range(l))
-
-def query(sql):
-    with closing(sqlite3.connect(DB_PATH)) as con, con, closing(con.cursor()) as cur:
-        cur.execute(sql)
-        return cur.fetchall()
-
-def querySingle(sql):
-    with closing(sqlite3.connect(DB_PATH)) as con, con, closing(con.cursor()) as cur:
-        cur.execute(sql)
-
-        return cur.fetchone()
-
-def checkPassword(username, password):
-    userData = querySingle(f"SELECT * FROM user WHERE username = '{username}'")
-    if not userData:
-        return False
-    encodedPassword = password.encode("utf-8")
-    dbHash = userData[1].encode("utf-8")
-    return checkpw(encodedPassword, dbHash)
 
 def isLoggedin():
     return session.get("login", None) != None
+
 
 def isCurrentUserAdmin():
     if not isLoggedin():
         return False
 
-    return (
-        querySingle(
-            f"SELECT isadmin FROM user WHERE username = '{session['login']['username']}'"
-        )
-    )[0] == 1
-
-def log(msg):
-    print(msg, file=sys.stderr)
-
-def getResetToken(username):
-    payload = {'reset_password': username, 'exp': datetime.now() + timedelta(seconds=600)}
-    return jwt.encode(payload, JWT_KEY, algorithm='HS256')
-
-def checkToken(token):
-    try:
-        username = jwt.decode(token, JWT_KEY, algorithms=['HS256'])['reset_password']
-    except:
-        return None
-    return querySingle(f"SELECT * FROM user WHERE username = '{username}'")
-    
+    return User(session["login"]).isAdmin()

@@ -1,7 +1,8 @@
 
 document.addEventListener("DOMContentLoaded", async function () {
+    await initSpecialNavbarButtons();
+
     if (await isLogged()) {
-        console.log(await getNumberOfMessages());
         setBadge(await getNumberOfMessages());
     }
 });
@@ -34,4 +35,26 @@ async function isLogged() {
         .then((text) => {
             return (text == "True");
         });
+}
+
+async function isAdmin() {
+    return await fetch("/api/isAdmin", {
+        method: "GET"
+    }).then((response) => response.text())
+        .then((text) => {
+            return (text == "True")
+        });
+}
+
+async function initSpecialNavbarButtons() {
+    if (await isAdmin()) {
+        const parent = document.getElementById("navbarList")
+
+        let newElement = document.createElement("li");
+        newElement.innerHTML = "<a href='/userList'>Lista użytkowników</a>";
+        const refNode = parent.childNodes[5];
+        console.log(parent.childNodes);
+
+        parent.insertBefore(newElement, refNode);
+    }
 }

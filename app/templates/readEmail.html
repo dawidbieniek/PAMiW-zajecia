@@ -1,6 +1,6 @@
 #extends "base.html"
 #block title
-Wiadomość od {{email[2]}}
+Wiadomość od {{fromName}}
 #endblock
 
 #block contents
@@ -9,10 +9,10 @@ Wiadomość od {{email[2]}}
     #if msg is defined
     <span class="error-message">{{msg}}</span>
     #endif
-    <input readonly class="small-input" type="text" value="{{email[2]}}" />
-    <input readonly class="small-input" type="text" value="{{email[3]}}" />
-    <textarea readonly class="big-input">{{email[4]}}</textarea>
-    <form action="{{url_for('deleteEmail', id=email[0])}}">
+    <input readonly class="small-input" type="text" value="{{fromName}}" />
+    <input readonly class="small-input" type="text" value="{{subject}}" />
+    <textarea readonly class="big-input">{{body}}</textarea>
+    <form action="{{url_for('deleteEmail', id=id)}}">
         <button type="submit">Usuń wiadomość</button>
     </form>
 </div>

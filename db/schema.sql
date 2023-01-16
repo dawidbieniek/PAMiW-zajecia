@@ -1,14 +1,15 @@
-DROP TABLE IF EXISTS email;
 DROP TABLE IF EXISTS user;
 DROP TABLE IF EXISTS car;
+DROP TABLE IF EXISTS message;
 DROP TABLE IF EXISTS reservation;
+DROP TABLE IF EXISTS blackTokens;
 
 CREATE TABLE user
 (
     username TEXT(32) PRIMARY KEY,
+    email TEXT(64),
     password TEXT(128) NOT NULL,
-    isadmin INTEGER,
-    email TEXT(64)
+    isadmin INTEGER
 );
 
 CREATE TABLE car
@@ -19,7 +20,7 @@ CREATE TABLE car
     price REAL
 );
 
-CREATE TABLE email
+CREATE TABLE message
 (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     toUsername TEXT(32),
@@ -38,4 +39,10 @@ CREATE TABLE reservation
     carId INTEGER NOT NULL,
     FOREIGN KEY(userId) REFERENCES user(username),
     FOREIGN KEY(carId) REFERENCES car(id)
+);
+
+CREATE TABLE blackTokens
+(
+    token TEXT PRIMARY KEY NOT NULL,
+    deleteDate DATE NOT NULL
 );

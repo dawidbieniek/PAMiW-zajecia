@@ -15,18 +15,13 @@
 
 <body>
     <div class="navbar">
-        <ul>
+        <ul id="navbarList">
             <li>
                 <a href="{{url_for('indexPage')}}">Strona główna</a>
             </li>
             <li>
                 <a href="{{url_for('carSearchPage')}}">Wyszukiwanie</a>
             </li>
-            #if session.get('login', None) != None and session.get('login', None)["isadmin"]
-            <li>
-                <a href="{{url_for('userListPage')}}">Lista użytkowników</a>
-            </li>
-            #endif
             #if session.get('login', None) == None
             <li class="end-item">
                 <a href="{{url_for('loginPage', next=url_for(request.endpoint))}}">Logowanie</a>
