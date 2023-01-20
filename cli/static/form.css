@@ -1,0 +1,101 @@
+:root {
+    --max-width: 400px;
+    --gray: rgba(0,0,0, 0.6);
+    --dark-gray: rgba(0,0,0, 0.8);
+    --input-bg: rgba(0,0,0, 0.1);
+    --accent:rgb(66, 133, 244);
+    --error:rgba(255, 0, 0, 0.8);
+}
+
+
+body{
+    margin:0;
+    background: var(--background-gradient);
+    font-family: "Roboto", sans-serif;
+}
+
+.form {
+    position: relative;
+    background: white;
+    width: var(--max-width);
+    border-radius: 8px;
+    margin: 60px auto 10px;
+    overflow: hidden;
+    padding:20px;
+}
+
+.form h1 {
+    color: var(--accent);
+    font-size: 24px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin: 0 0 20px;
+}
+
+.form-group:last-child {
+    margin: 0;
+}
+
+.form-group label {
+    display: block;
+    margin: 0 0 10px;
+    color: var(--gray);
+    font-size: 12px;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: .2em;
+}
+
+.form-group input {
+    display: block;
+    background: var(--input-bg);
+    width: 100%;
+    border: 1px;
+    border-radius: 4px;
+    box-sizing: border-box;
+    padding: 12px 20px;
+    color: var(--gray);
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    transition: 0.3s ease;
+}
+
+.form-group button {
+    outline: none;
+    background: var(--accent);
+    width: 100%;
+    border: 0;
+    border-radius: 4px;
+    padding: 12px 20px;
+    color: white;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.form-group a {    
+    color: var(--accent);
+    font-size: 0.8em;
+    text-decoration: none;
+}
+
+.error-message{
+    background: var(--error);
+    padding: 4px;
+    width: 100%;
+    border: 0;
+    border-radius: 4px;
+    color: white;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: bold;
+}

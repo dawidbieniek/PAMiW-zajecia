@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Rezerwacje</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+</head>
+
+<body>
+    <h1>Sprawdzanie rezerwacji</h1>
+    <form class="form" action="/" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            # if not id
+            # set id = ""
+            # endif
+            <input style="width:36em" type="text" maxlength="36" name="textId" placeholder="id rezerwacji" value="{{id}}" />
+        </div>
+        <div class="form-group">
+            <input style="width:36em" type="file" name="qr" placeholder="kod qr rezerwacji" />
+        </div>
+        #if msg is defined
+        <div class="form-group">
+            <span style="width:36em" class="error-message">{{msg}}</span>
+        </div>
+        #endif
+        <div class="form-group">
+            <button style="width:36em" type="submit">Sprawdź</button>
+        </div>
+    </form>
+</body>
+
+</html>

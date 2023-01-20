@@ -6,7 +6,6 @@ from random import SystemRandom
 import jwt
 
 import mydb
-from debug import log
 
 JWT_KEY = None
 

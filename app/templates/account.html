@@ -1,12 +1,13 @@
 #extends "base.html"
 #block title
-Konto {{user.username}}
+Konto {{user}}
 #endblock
 
 #block contents
 <h1>Konto</h1>
-<p>Login: {{user.username}}</p>
-<p>Typ konta: {{'admin' if user.isadmin else 'zwykłe'}}</p>
+<p>Login: {{user}}</p>
+<p>Email: {{email}}</p>
+<p>Typ konta: {{'admin' if admin else 'zwykłe'}}</p>
 <br>
 <a href="{{url_for('changePasswordPage')}}">Zmień hasło</a>
 

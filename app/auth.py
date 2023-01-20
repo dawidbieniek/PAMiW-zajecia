@@ -6,6 +6,8 @@ from json import loads
 from security import genRandomState
 from User import User, isLoginTaken
 
+from debug import log
+
 GH_CLIENT_ID = None
 GH_CLIENT_SECRET = None
 
@@ -28,7 +30,6 @@ def GHAuthResponse():
     request = Request(
         "GET", "https://github.com/login/oauth/authorize", params=params
     ).prepare()
-
     response = redirect(request.url)
     response.set_cookie("state", state)
 
@@ -50,9 +51,13 @@ def GHGetUserData(request):
     headers = {"Accept": "application/json", "Authorization": auth}
 
     userResponse = get("https://api.github.com/user", headers=headers)
-    return (loads(userResponse.text).get("login"), "placeholder")
+    log(userResponse.text)
+    return (loads(userResponse.text).get("login"), loads(userResponse.text).get("email"))
 
-def GHReqisterNewUser(username, email):
+def GHRegisterNewUser(username, email):
     user = User(username)
+
     if not isLoginTaken(username):
         user.register(email, genRandomState())
+
+    return user

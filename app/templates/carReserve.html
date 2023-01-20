@@ -14,4 +14,8 @@ Rezerwuj {{car[1]}}
 <form action="{{url_for('carSearchPage')}}">
     <button type="submit">OK</button>
 </form>
+<form action="{{url_for('downloadQr')}}" method="POST" enctype="multipart/form-data">
+    <input name="imgData" type="hidden" value="{{resId}}"/>
+    <button type="submit">Zapisz</button>
+</form>
 #endblock

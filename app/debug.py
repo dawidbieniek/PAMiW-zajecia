@@ -1,4 +1,2 @@
-import sys
-
 def log(msg):
-    print(msg, file=sys.stderr)
+    print('\033[91m' + str(msg))

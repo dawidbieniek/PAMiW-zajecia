@@ -1,15 +1,15 @@
 from flask import (
     Flask,
     request,
+    Response,
     render_template,
     url_for,
     redirect,
     session,
     send_from_directory,
 )
-
 from dotenv import load_dotenv
-from os import path
+from os import path, remove
 
 from datetime import datetime
 import secrets
@@ -17,13 +17,15 @@ import functools
 
 from User import User, isLoginTaken, isEmailTaken, getAllUsers
 import mydb
-from debug import log
 import security
 import myemail
 import message
 import cars
-import reservations
+import rpc
 import auth
+import qr
+
+from debug import log
 
 load_dotenv()
 
@@ -69,7 +71,6 @@ def prohibitLogged(func):
 
     return internal
 
-
 @app.route("/")
 def indexPage():
     return render_template("index.html")
@@ -99,8 +100,9 @@ def loginPage():
                 username=(username if username else None),
             )
 
-        # user = User(username)
-        if User(username).checkPassword(password):
+        user = User(username)
+        log(user)
+        if user.checkPassword(password):
             # Save user to session
             session["login"] = username
             # Redirect
@@ -187,7 +189,7 @@ def changePasswordPage():
         if not user.checkPassword(password):
             return render_template("changePassword.html", msg="Niepoprawne hasło")
         # Update password
-        user.changePassword(password)
+        user.changePassword(newPassword)
         return redirect(url_for("loginPage"))
     # GET
     return render_template("changePassword.html")
@@ -289,12 +291,16 @@ def accountPage():
     # POST
     if request.method == "POST":
         file = request.files.get("file", None)
-        file.save(path.join(app.config["UPLOAD_FOLDER"], session["login"] + ".png"))
-        log(file)
+        filePath = path.join(app.config["UPLOAD_FOLDER"], session["login"] + ".png")
+
+        if path.exists(filePath):
+            remove(filePath)
+
+        file.save(filePath)
     # GET
-    user = session.get("login", None)
+    user = User(session.get("login", None))
     if user:
-        return render_template("account.html", user=user)
+        return render_template("account.html", user=user.getUsername(), email=user.getEmail(), admin=user.isAdmin())
     return redirect(url_for("loginPage"))
 
 
@@ -310,7 +316,6 @@ def emailPage():
     emails = mydb.query(
         f"SELECT * FROM message WHERE toUsername = '{session['login']}'"
     )
-    log(emails)
     return render_template("emails.html", emails=emails)
 
 
@@ -388,16 +393,15 @@ def carInfoPage(id):
 @app.route("/cars/reserve/<id>", methods=["GET"])
 @requireLogin
 def carReservePage(id):
-    reservationId = reservations.createId()
     username = session["login"]
     now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
     car = cars.getCarInfo(id)
 
     if not car:
         return redirect(url_for("searchPage"))
-    reservations.add(reservationId, now, username, car[0])
+    reservationId = rpc.createReservation(now, username, car[0])
 
-    return render_template("carReserve.html", car=car, resId=reservationId, img=reservations.createQRImage(reservationId))
+    return render_template("carReserve.html", car=car, resId=reservationId, img=qr.createQRImage(reservationId))
 
 
 @app.route("/userList", methods=["GET"])
@@ -422,6 +426,15 @@ def apiLoggedIn():
 @app.route("/api/isAdmin")
 def apiAdmin():
     return str(isCurrentUserAdmin())
+
+@app.route("/api/cars/reserve/downloadQr", methods=["POST"])
+def downloadQr():
+    if request.method == "POST":
+        imgData = request.form.get("imgData")
+        qrImg = qr.createPlainQRImage(imgData)
+        generator = (qrImg)
+        return Response(generator, mimetype="image.png", headers={"Content-Disposition" : "attachment;filename=reservation.png"})
+    return redirect(url_for('indexPage'))
 
 
 @app.route("/github/callback")

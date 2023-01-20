@@ -16,6 +16,8 @@ class User:
 
     def checkPassword(self, password):
         hashed = self.queryField("password")
+        if not hashed:
+            return None
         return checkHash(password, hashed)
 
     def changePassword(self, password):
@@ -40,9 +42,10 @@ class User:
         return User(username)
 
     def queryField(self, field):
-        return mydb.querySingle(
-            f"SELECT {field} FROM user WHERE username = '{self.username}'"
-        )[0]
+        row = mydb.querySingle(f"SELECT {field} FROM user WHERE username = '{self.username}'")
+        if not row:
+            return None
+        return row[0]
 
 
 def isLoginTaken(username):
